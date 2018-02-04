@@ -1,12 +1,13 @@
 from enum import Enum
 
 '''ENUMS'''
+
+
 class NeuronType(Enum):
     INPUT = 1
     BIAS = 2
     HIDDEN = 3
     OUTPUT = 4
-
 
 
 class InnovationType(Enum):
