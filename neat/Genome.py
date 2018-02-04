@@ -1,25 +1,14 @@
 import random
 
+from neat.InnovationDB import InnovationDB
 from neat.LinkGene import LinkGene
 from neat.NeuronGene import NeuronGene
 from neat.util import NeuronType, InnovationType
 
 
 class Genome:
-
-    def __init__(self, inputs: int, outputs: int):
-        self.neurons = []
-        self.links = []
-        for i in range(inputs):
-            self.neurons.append(NeuronGene(i, NeuronType.INPUT, False, 0, 0, 0))
-
-        for i in range(outputs):
-            self.neurons.append(NeuronGene(i + inputs, NeuronType.OUTPUT, False, 0, 1, 1))
-            for j in range(inputs):
-                self.links.append(LinkGene(self.neurons[j], self.neurons[i + inputs], 1, True, False, 0))
-
     def __init__(self, genome_id: int, neurons: list, links: list, phenotype, fitness: float, adjusted_fitness: float,
-                 amount_to_spawn: int, num_inputs: int, num_outputs: int, species: int):
+                 amount_to_spawn: int, num_inputs: int, num_outputs: int, species: int, inputs: int, outputs: int):
         self.genome_id = genome_id
         self.neurons = neurons
         self.links = links
@@ -30,18 +19,41 @@ class Genome:
         self.num_inputs = num_inputs
         self.num_outputs = num_outputs
         self.species = species
-
-    def __init__(self, neurons: list, links: list, inputs: int, outputs: int):
-        self.neurons = neurons
-        self.links = links
         self.inputs = inputs
         self.outputs = outputs
+
+
+    @classmethod
+    def from_inputs_outputs(cls, inputs: int, outputs: int):
+        ret = cls()
+        ret.neurons = []
+        ret.links = []
+        for i in range(inputs):
+            ret.neurons.append(NeuronGene(i, NeuronType.INPUT, False, 0, 0, 0))
+
+        for i in range(outputs):
+            ret.neurons.append(NeuronGene(i + inputs, NeuronType.OUTPUT, False, 0, 1, 1))
+            for j in range(inputs):
+                ret.links.append(LinkGene(ret.neurons[j], ret.neurons[i + inputs], 1, True, False, 0))
+        return ret
+
+
+    @classmethod
+    def from_links_neurons(cls, neurons: list, links: list, inputs: int, outputs: int):
+        ret = cls()
+        ret.neurons = neurons
+        ret.links = links
+        ret.inputs = inputs
+        ret.outputs = outputs
+        return ret
+
 
     def duplicate_link(self, neuron_in, neuron_out):
         for link in self.links:
             if link.from_neuron == neuron_in and link.to_neuron == neuron_out:
                 return True
         return False
+
 
     def already_have_this_neuron_id(self, neuron_id):
         for neuron in self.neurons:
@@ -54,11 +66,14 @@ class Genome:
     def get_element_pos(self, neuron_id: int) -> int:
         pass
 
+
     def create_phenotype(self):
         pass
 
-    def add_link(self, mutation_rate: float, chance_of_looped: float, innovation,
+
+    def add_link(self, mutation_rate: float, chance_of_looped: float, innovation_db: InnovationDB,
                  num_tries_to_find_loop: int, num_tries_to_add_link: int):
+
         if random.uniform(0, 1) > mutation_rate:
             return
 
@@ -83,7 +98,8 @@ class Genome:
                 neuron1_id = self.neurons[random.randint(0, len(self.neurons) - 1)].neuron_id
                 neuron2_id = self.neurons[random.randint(self.inputs + 1, len(self.neurons) - 1)].id
                 # second neuron must not be input or bias
-                if self.neurons[self.get_element_pos(neuron2_id)].neuron_type > 2:
+                if self.neurons[self.get_element_pos(neuron2_id)].neuron_type != NeuronType.INPUT \
+                        and self.neurons[self.get_element_pos(neuron2_id)].neuronType != NeuronType.BIAS:
                     continue
 
                 if self.duplicate_link(neuron1_id, neuron2_id) or neuron1_id == neuron2_id:
@@ -94,23 +110,44 @@ class Genome:
         if neuron1_id < 0 or neuron2_id < 0:
             return
 
-        id = innovation.check_innovation(neuron1_id, neuron2_id, InnovationType.NEW_LINK)
+        innovation_id = innovation_db.check_innovation(neuron1_id, neuron2_id, InnovationType.NEW_LINK)
 
         if self.neurons[self.get_element_pos(neuron1_id)].split_y > \
                 self.neurons[self.get_element_pos(neuron2_id)].split_y:
             recurrent = True
 
-        if id < 0:
-            innovation.create_new_innovation(neuron1_id, neuron2_id, InnovationType.NEW_LINK)
-            id = innovation.next_number() - 1
-            gene = LinkGene(neuron1_id, neuron2_id, True, id, random.uniform(-1, 1))
+        if innovation_id < 0:
+            innovation_db.create_new_innovation(neuron1_id, neuron2_id, InnovationType.NEW_LINK)
+            innovation_id = innovation_db.next_number() - 1
+            gene = LinkGene.constructor(neuron1_id, neuron2_id, True, innovation_id, random.uniform(-1, 1), recurrent)
             self.links.append(gene)
         else:
-            gene = LinkGene(neuron1_id, neuron2_id, True, id, random.uniform(-1, 1), recurrent)
+            gene = LinkGene.constructor(neuron1_id, neuron2_id, True, innovation_id, random.uniform(-1, 1), recurrent)
             self.links.append(gene)
 
-    def add_neuron(self):
+
+    def add_neuron(self, mutation_rate: float, innovation_db: InnovationDB, num_tries_to_find_old_link: int):
+
+        if random.uniform(0, 1) > mutation_rate:
+            return
+
+        old_link_found = False
+        chosen_link_id = 0
+
+        size_threshold = self.inputs + self.outputs + 5
+
+        if len(self.links) > size_threshold:
+            for i in range(num_tries_to_find_old_link):
+                chosen_link_id = 0
+
+
+    def change_weights(self):
         pass
+
+
+    def crossover(self):
+        pass
+
 
     def __lt__(self, other):
         return self.fitness < other.fitness
