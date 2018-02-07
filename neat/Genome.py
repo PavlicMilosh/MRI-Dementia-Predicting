@@ -1,34 +1,18 @@
 import random
+from math import sqrt
 
+from neat.InnovationDB import InnovationDB
 from neat.LinkGene import LinkGene
 from neat.NeuronGene import NeuronGene
 from neat.InovationType import InnovationType
 from neat.NeuronType import NeuronType
-from neat.ParentType import ParentType
-
-from typing import NewType
 
 
 class Genome(object):
 
-    # ======================================================================================================================
+    # ==================================================================================================================
     # CONSTRUCTORS
-    # ======================================================================================================================
-
-    def __init__(self,
-                 inputs: int,
-                 outputs: int):
-
-        self.neurons = []
-        self.links = []
-        for i in range(inputs):
-            self.neurons.append(NeuronGene(i, NeuronType.INPUT, False, 0, 0, 0))
-
-        for i in range(outputs):
-            self.neurons.append(NeuronGene(i + inputs, NeuronType.OUTPUT, False, 0, 1, 1))
-            for j in range(inputs):
-                self.links.append(LinkGene(self.neurons[j], self.neurons[i + inputs], 1, True, False, 0))
-
+    # ==================================================================================================================
 
     def __init__(self,
                  genome_id: int,
@@ -40,7 +24,9 @@ class Genome(object):
                  amount_to_spawn: int,
                  num_inputs: int,
                  num_outputs: int,
-                 species: int):
+                 species: int,
+                 inputs: int,
+                 outputs: int):
 
         self.genome_id = genome_id
         self.neurons = neurons
@@ -52,30 +38,52 @@ class Genome(object):
         self.num_inputs = num_inputs
         self.num_outputs = num_outputs
         self.species = species
-
-
-    def __init__(self,
-                 neurons: list,
-                 links: list,
-                 inputs: int,
-                 outputs: int):
-
-        self.neurons = neurons
-        self.links = links
         self.inputs = inputs
         self.outputs = outputs
 
 
-    def duplicate_link(self, neuron_in: NeuronGene, neuron_out: NeuronGene):
-        for link in self.links:
-            if link.from_neuron == neuron_in and link.to_neuron == neuron_out:
+    @classmethod
+    def from_inputs_outputs(cls, inputs: int, outputs: int):
+
+        ret = cls()
+        ret.neurons = []
+        ret.links = []
+
+        for i in range(inputs):
+            ret.neurons.append(NeuronGene(i, NeuronType.INPUT, False, 0, 0, 0))
+
+        for i in range(outputs):
+            ret.neurons.append(NeuronGene(i + inputs, NeuronType.OUTPUT, False, 0, 1, 1))
+            for j in range(inputs):
+                ret.links.append(LinkGene(ret.neurons[j], ret.neurons[i + inputs], 1, True, False, 0))
+
+        return ret
+
+
+    @classmethod
+    def from_links_neurons(cls,
+                           neurons: list,
+                           links: list,
+                           inputs: int,
+                           outputs: int):
+        ret = cls()
+        ret.neurons = neurons
+        ret.links = links
+        ret.inputs = inputs
+        ret.outputs = outputs
+        return ret
+
+
+    def duplicate_link(self, neuron_in_id: int, neuron_out_id: int):
+        for l in self.links:
+            if l.from_neuron_id == neuron_in_id and l.to_neuron_id == neuron_out_id:
                 return True
         return False
 
 
-    def already_have_this_neuron_id(self, neuron_id: NeuronGene):
-        for neuron in self.neurons:
-            if neuron.neuron_id == neuron_id:
+    def already_have_this_neuron_id(self, neuron_id: int):
+        for n in self.neurons:
+            if n.neuron_id == neuron_id:
                 return True
         return False
 
@@ -94,15 +102,10 @@ class Genome(object):
     # MUTATIONS
     # ==================================================================================================================
 
+    # ADD LINK =========================================================================================================
 
-    # == ADD LINK ======================================================================================================
-
-    def add_link(self,
-                 mutation_rate: float,
-                 chance_of_looped: float,
-                 innovation,
-                 num_tries_to_find_loop: int,
-                 num_tries_to_add_link: int):
+    def add_link(self, mutation_rate: float, chance_of_looped: float, innovation_db: InnovationDB,
+                 num_tries_to_find_loop: int, num_tries_to_add_link: int):
 
         if random.uniform(0, 1) > mutation_rate:
             return
@@ -128,7 +131,8 @@ class Genome(object):
                 neuron1_id = self.neurons[random.randint(0, len(self.neurons) - 1)].neuron_id
                 neuron2_id = self.neurons[random.randint(self.inputs + 1, len(self.neurons) - 1)].id
                 # second neuron must not be input or bias
-                if self.neurons[self.get_element_pos(neuron2_id)].neuron_type > 2:
+                if self.neurons[self.get_element_pos(neuron2_id)].neuron_type != NeuronType.INPUT \
+                        and self.neurons[self.get_element_pos(neuron2_id)].neuronType != NeuronType.BIAS:
                     continue
 
                 if self.duplicate_link(neuron1_id, neuron2_id) or neuron1_id == neuron2_id:
@@ -139,29 +143,90 @@ class Genome(object):
         if neuron1_id < 0 or neuron2_id < 0:
             return
 
-        id = innovation.check_innovation(neuron1_id, neuron2_id, InnovationType.NEW_LINK)
+        innovation_id = innovation_db.check_innovation(neuron1_id, neuron2_id, InnovationType.NEW_LINK)
 
         if self.neurons[self.get_element_pos(neuron1_id)].split_y > \
                 self.neurons[self.get_element_pos(neuron2_id)].split_y:
             recurrent = True
 
-        if id < 0:
-            innovation.create_new_innovation(neuron1_id, neuron2_id, InnovationType.NEW_LINK)
-            id = innovation.next_number() - 1
-            gene = LinkGene(neuron1_id, neuron2_id, True, id, random.uniform(-1, 1))
+        if innovation_id < 0:
+            innovation_db.create_new_innovation(neuron1_id, neuron2_id, InnovationType.NEW_LINK)
+            innovation_id = innovation_db.next_number() - 1
+            gene = LinkGene.constructor(neuron1_id, neuron2_id, True, innovation_id, random.uniform(-1, 1), recurrent)
             self.links.append(gene)
         else:
-            gene = LinkGene(neuron1_id, neuron2_id, True, id, random.uniform(-1, 1), recurrent)
+            gene = LinkGene.constructor(neuron1_id, neuron2_id, True, innovation_id, random.uniform(-1, 1), recurrent)
             self.links.append(gene)
 
 
-    # == ADD NEURON ====================================================================================================
+    # ADD NEURON =======================================================================================================
 
-    def add_neuron(self):
-        pass
+    def add_neuron(self, mutation_rate: float, innovation_db: InnovationDB, num_tries_to_find_old_link: int):
+
+        if random.uniform(0, 1) > mutation_rate:
+            return
+
+        old_link_found = False
+        chosen_link_index = 0
+
+        size_threshold = self.inputs + self.outputs + 5
+
+        if len(self.links) > size_threshold:
+            for i in range(num_tries_to_find_old_link):
+                chosen_link_index = random.randint(0, len(self.links) - 1 - int(sqrt(len(self.links))))
+
+                from_neuron = self.links[chosen_link_index].from_neuron
+
+                if self.links[chosen_link_index].enabled and not self.links[chosen_link_index].recurrent \
+                        and self.neurons[self.get_element_pos(from_neuron)].neuron_type != NeuronType.BIAS:
+                    old_link_found = True
+                    break
+
+            if not old_link_found:
+                return
+
+        else:
+            while not old_link_found:
+                chosen_link_index = random.randint(0, len(self.links) - 1)
+
+                from_neuron = self.links[chosen_link_index].from_neuron
+
+                if self.links[chosen_link_index].enabled and not self.links[chosen_link_index].recurrent \
+                        and self.neurons[self.get_element_pos(from_neuron)].neuron_type != NeuronType.BIAS:
+                    old_link_found = True
+
+        self.links[chosen_link_index].enabled = False
+
+        original_weight = self.links[chosen_link_index].weight
+
+        from_neuron = self.links[chosen_link_index].from_neuron
+        to_neuron = self.links[chosen_link_index].to_neuron
+
+        new_depth = (self.neurons[self.get_element_pos(from_neuron)].split_y
+                     + self.neurons[self.get_element_pos(to_neuron)].split_y) / 2
+        new_width = (self.neurons[self.get_element_pos(from_neuron)].split_x
+                     + self.neurons[self.get_element_pos(to_neuron)].split_x) / 2
+
+        innovation_id = innovation_db.check_innovation(from_neuron, to_neuron, InnovationType.NEW_NEURON)
+
+        if innovation_id > 0:
+            neuron_id = innovation_db.get_neuron_id(innovation_id)
+            if self.already_have_this_neuron_id(neuron_id):
+                innovation_id = -1
+
+        if innovation_id < 0:
+            new_neuron_id = innovation_db.create_neuron_innovation(from_neuron, to_neuron,
+                                                                   InnovationType.NEW_NEURON, NeuronType.HIDDEN,
+                                                                   new_width, new_depth)
+
+            self.neurons.append(NeuronGene(NeuronType.HIDDEN, new_neuron_id, new_depth, new_width))
+
+            link1_id = innovation_db.next_number()
+
+            innovation_db.create_link_innovation(from_neuron, new_neuron_id, InnovationType.NEW_LINK)
 
 
-    # == WEIGHT MUTATION ===============================================================================================
+    # WEIGHT MUTATION ==================================================================================================
 
     def mutate_weights(self,
                        mutation_rate: float,
@@ -176,7 +241,7 @@ class Genome(object):
                     self.links[idx].weight = random.uniform(-1, 1) * max_perturbation
 
 
-    # == ACTIVATION MUTATION ===========================================================================================
+    # ACTIVATION MUTATION ==============================================================================================
 
     def mutate_activation_response(self,
                                    mutation_rate: float,
@@ -186,91 +251,21 @@ class Genome(object):
                 self.neurons[idx].activation_response += random.uniform(-1, 1) * max_perturbation
 
 
-    # ======================================================================================================================
-    # CROSSOVER
-    # ======================================================================================================================
-
-
-    def crossover(self, mother: 'Genome', father: 'Genome') -> 'Genome':
-
-        best_parent = None
-
-        # choose best parent
-        if mother.fitness() == father.fitness():
-            if mother.num_genes() == father.num_genes():
-                best_parent = ParentType.MOTHER if random.uniform(0, 1) > 0.5 else ParentType.FATHER
-            else:
-                best_parent = ParentType.MOTHER if mother.num_genes() < father.num_genes() else ParentType.FATHER
-        else:
-            best_parent = ParentType.MOTHER if mother.fitness() > father.fitness() else ParentType.FATHER
-
-        baby_neurons = []
-        baby_genes = []
-        vec_neurons = []
-
-        mother_it = iter(mother.start_of_genes())
-        father_it = iter(father.start_of_genes())
-
-        cur_mother = LinkGene()
-        cur_father = LinkGene()
-
-        selected_gene = None
-
-        # loop through genes while the end of both parent genes
-        # haven't been reached
-        while cur_mother is not None and cur_father is not None:
-
-            # if we reached the end of mother genes
-            if cur_mother is None and cur_father is not None:
-                if best_parent == ParentType.FATHER:
-                    selected_gene = cur_father
-                cur_father = next(father_it, None)
-
-            # if we reached the end of fathers genes
-            elif cur_mother is not None and cur_father is None:
-                if best_parent == ParentType.MOTHER:
-                    selected_gene = cur_mother
-                cur_mother = next(mother_it, None)
-
-            # if mothers innovation is less (older) than fathers
-            elif cur_mother.innovation_id < cur_father.innovation_id:
-                if best_parent == ParentType.MOTHER:
-                    selected_gene = cur_mother
-                cur_mother = next(mother_it, None)
-
-            # if fathers innovation is less (older) than mothers
-            elif cur_father.innovation_id < cur_mother.innovation_id:
-                if best_parent == ParentType.FATHER:
-                    selected_gene = cur_father
-                cur_father = next(father_it, None)
-
-            # if innovations are same
-            elif cur_mother.innovation_id == cur_father.innovation_id:
-                selected_gene = cur_mother if random.uniform(0, 1) > 0.5 else cur_father
-                cur_father = next(father_it, None)
-                cur_mother = next(mother_it, None)
-
-            if len(baby_genes) == 0:
-                baby_genes.append(selected_gene)
-            elif baby_genes[len(baby_genes)-1].innovation_id != selected_gene.innovation_id:
-                    baby_genes.append(selected_gene)
-
-            
-    # ======================================================================================================================
-    # FITNESS
-    # ======================================================================================================================
-
-
-    def fitness(self):
-        pass
-
     def __lt__(self, other):
         return self.fitness < other.fitness
 
 
-    # ======================================================================================================================
+    # ==================================================================================================================
+    # FITNESS
+    # ==================================================================================================================
+
+    def fitness(self):
+        pass
+
+
+    # ==================================================================================================================
     # ACCESSOR METHODS
-    # ======================================================================================================================
+    # ==================================================================================================================
 
     def num_genes(self):
         return len(self.links)
@@ -278,8 +273,8 @@ class Genome(object):
     def num_neurons(self):
         return len(self.neurons)
 
-    def start_of_genes(self):
+    def start_of_links(self):
         return next(iter(self.links))
 
-    def end_of_genes(self):
-        return last
+    def end_of_link(self):
+        return None
