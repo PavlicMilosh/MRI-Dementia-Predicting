@@ -21,6 +21,7 @@ class Innovation:
         ret.neuron_type = neuron.neuron_type
         ret.neuron_in = -1
         ret.neuron_out = -1
+        return ret
 
     @classmethod
     def init2(cls, n_in: int, n_out: int, innovation_type: InnovationType, innovation_id: int):
@@ -31,6 +32,7 @@ class Innovation:
         ret.innovation_id = innovation_id
         ret.neuron_id = 0
         ret.neuron_type = None
+        return ret
 
     @classmethod
     def init3(cls, n_in: int, n_out: int, innovation_type: InnovationType, innovation_id: int, neuron_type: NeuronType, x, y):
@@ -40,14 +42,4 @@ class Innovation:
         ret.innovation_type = innovation_type
         ret.innovation_id = innovation_id
         ret.neuron_type = neuron_type
-
-
-
-
-
-
-
-
-
-
-
+        return ret
