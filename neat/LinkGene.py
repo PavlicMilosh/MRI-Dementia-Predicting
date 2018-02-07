@@ -1,7 +1,13 @@
 class LinkGene:
 
-    def __init__(self, from_neuron_id: int, to_neuron_id: int, weight: float,
-                 enabled: bool, recurrent: bool, innovation_id: int):
+    def __init__(self,
+                 from_neuron_id: int,
+                 to_neuron_id: int,
+                 weight: float,
+                 enabled: bool,
+                 recurrent: bool,
+                 innovation_id: int):
+
         self.from_neuron_id = from_neuron_id
         self.to_neuron_id = to_neuron_id
         self.weight = weight
@@ -11,7 +17,13 @@ class LinkGene:
 
 
     @classmethod
-    def constructor(cls, neuron_in_id, neuron_out_id, enabled, innovation_id, weight, recurrent):
+    def constructor(cls,
+                    neuron_in_id: int,
+                    neuron_out_id: int,
+                    enabled: bool,
+                    innovation_id: int,
+                    weight: float,
+                    recurrent: bool) -> 'LinkGene':
         ret = cls()
         ret.from_neuron_id = neuron_in_id
         ret.to_neuron_id = neuron_out_id
@@ -20,6 +32,11 @@ class LinkGene:
         ret.weight = weight
         ret.recurrent = recurrent
         return ret
+
+
+    @classmethod
+    def constructor(cls) -> 'LinkGene':
+        return cls()
 
 
     def __lt__(self, other):

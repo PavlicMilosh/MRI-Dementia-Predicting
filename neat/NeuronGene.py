@@ -1,10 +1,16 @@
-from neat.util import NeuronType
+from neat.NeuronType import NeuronType
 
 
 class NeuronGene:
 
-    def __init__(self, neuron_id: int, neuron_type: NeuronType, recurrent: bool, activation_response: float,
-                 split_x: int, split_y: int):
+    def __init__(self,
+                 neuron_id: int,
+                 neuron_type: NeuronType,
+                 recurrent: bool,
+                 activation_response: float,
+                 split_x: int,
+                 split_y: int):
+
         self.neuron_id = neuron_id
         self.neuron_type = neuron_type
         self.recurrent = recurrent
@@ -23,3 +29,7 @@ class NeuronGene:
         ret.split_y = split_y
         ret.activation_response = activation
         ret.recurrent = recurrent
+
+    @classmethod
+    def constructor(cls) -> 'NeuronGene':
+        return cls()

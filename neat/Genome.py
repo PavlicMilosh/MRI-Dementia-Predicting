@@ -4,12 +4,30 @@ from math import sqrt
 from neat.InnovationDB import InnovationDB
 from neat.LinkGene import LinkGene
 from neat.NeuronGene import NeuronGene
-from neat.util import NeuronType, InnovationType
+from neat.InovationType import InnovationType
+from neat.NeuronType import NeuronType
 
 
-class Genome:
-    def __init__(self, genome_id: int, neurons: list, links: list, phenotype, fitness: float, adjusted_fitness: float,
-                 amount_to_spawn: int, num_inputs: int, num_outputs: int, species: int, inputs: int, outputs: int):
+class Genome(object):
+
+    # ==================================================================================================================
+    # CONSTRUCTORS
+    # ==================================================================================================================
+
+    def __init__(self,
+                 genome_id: int,
+                 neurons: list,
+                 links: list,
+                 phenotype,
+                 fitness: float,
+                 adjusted_fitness: float,
+                 amount_to_spawn: int,
+                 num_inputs: int,
+                 num_outputs: int,
+                 species: int,
+                 inputs: int,
+                 outputs: int):
+
         self.genome_id = genome_id
         self.neurons = neurons
         self.links = links
@@ -26,9 +44,11 @@ class Genome:
 
     @classmethod
     def from_inputs_outputs(cls, inputs: int, outputs: int):
+
         ret = cls()
         ret.neurons = []
         ret.links = []
+
         for i in range(inputs):
             ret.neurons.append(NeuronGene(i, NeuronType.INPUT, False, 0, 0, 0))
 
@@ -36,11 +56,16 @@ class Genome:
             ret.neurons.append(NeuronGene(i + inputs, NeuronType.OUTPUT, False, 0, 1, 1))
             for j in range(inputs):
                 ret.links.append(LinkGene(ret.neurons[j], ret.neurons[i + inputs], 1, True, False, 0))
+
         return ret
 
 
     @classmethod
-    def from_links_neurons(cls, neurons: list, links: list, inputs: int, outputs: int):
+    def from_links_neurons(cls,
+                           neurons: list,
+                           links: list,
+                           inputs: int,
+                           outputs: int):
         ret = cls()
         ret.neurons = neurons
         ret.links = links
@@ -49,18 +74,19 @@ class Genome:
         return ret
 
 
-    def duplicate_link(self, neuron_in, neuron_out):
-        for link in self.links:
-            if link.from_neuron == neuron_in and link.to_neuron == neuron_out:
+    def duplicate_link(self, neuron_in_id: int, neuron_out_id: int):
+        for l in self.links:
+            if l.from_neuron_id == neuron_in_id and l.to_neuron_id == neuron_out_id:
                 return True
         return False
 
 
-    def already_have_this_neuron_id(self, neuron_id):
-        for neuron in self.neurons:
-            if neuron.neuron_id == neuron_id:
+    def already_have_this_neuron_id(self, neuron_id: int):
+        for n in self.neurons:
+            if n.neuron_id == neuron_id:
                 return True
         return False
+
 
     # given a neuron id this function just finds its position in
     # m_vecNeurons
@@ -71,6 +97,12 @@ class Genome:
     def create_phenotype(self):
         pass
 
+
+    # ==================================================================================================================
+    # MUTATIONS
+    # ==================================================================================================================
+
+    # ADD LINK =========================================================================================================
 
     def add_link(self, mutation_rate: float, chance_of_looped: float, innovation_db: InnovationDB,
                  num_tries_to_find_loop: int, num_tries_to_add_link: int):
@@ -126,6 +158,8 @@ class Genome:
             gene = LinkGene.constructor(neuron1_id, neuron2_id, True, innovation_id, random.uniform(-1, 1), recurrent)
             self.links.append(gene)
 
+
+    # ADD NEURON =======================================================================================================
 
     def add_neuron(self, mutation_rate: float, innovation_db: InnovationDB, num_tries_to_find_old_link: int):
 
@@ -218,9 +252,55 @@ class Genome:
             self.neurons.append(new_neuron)
 
 
-    def change_weights(self):
-        pass
+    # WEIGHT MUTATION ==================================================================================================
+
+    def mutate_weights(self,
+                       mutation_rate: float,
+                       new_mutation_probability: float,
+                       max_perturbation: float):
+
+        for idx, val in enumerate(self.links):
+            if random.uniform(0, 1) < mutation_rate:
+                if random.uniform(0, 1) < new_mutation_probability:
+                    self.links[idx].weight = random.uniform(-1, 1)
+                else:
+                    self.links[idx].weight = random.uniform(-1, 1) * max_perturbation
+
+
+    # ACTIVATION MUTATION ==============================================================================================
+
+    def mutate_activation_response(self,
+                                   mutation_rate: float,
+                                   max_perturbation: float):
+        for idx, val in enumerate(self.neurons):
+            if random.uniform(0, 1) < mutation_rate:
+                self.neurons[idx].activation_response += random.uniform(-1, 1) * max_perturbation
 
 
     def __lt__(self, other):
         return self.fitness < other.fitness
+
+
+    # ==================================================================================================================
+    # FITNESS
+    # ==================================================================================================================
+
+    def fitness(self):
+        pass
+
+
+    # ==================================================================================================================
+    # ACCESSOR METHODS
+    # ==================================================================================================================
+
+    def num_genes(self):
+        return len(self.links)
+
+    def num_neurons(self):
+        return len(self.neurons)
+
+    def start_of_links(self):
+        return next(iter(self.links))
+
+    def end_of_link(self):
+        return None
