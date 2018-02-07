@@ -1,4 +1,5 @@
 import random
+from math import sqrt
 
 from neat.InnovationDB import InnovationDB
 from neat.LinkGene import LinkGene
@@ -132,20 +133,66 @@ class Genome:
             return
 
         old_link_found = False
-        chosen_link_id = 0
+        chosen_link_index = 0
 
         size_threshold = self.inputs + self.outputs + 5
 
         if len(self.links) > size_threshold:
             for i in range(num_tries_to_find_old_link):
-                chosen_link_id = 0
+                chosen_link_index = random.randint(0, len(self.links) - 1 - int(sqrt(len(self.links))))
+
+                from_neuron = self.links[chosen_link_index].from_neuron
+
+                if self.links[chosen_link_index].enabled and not self.links[chosen_link_index].recurrent \
+                        and self.neurons[self.get_element_pos(from_neuron)].neuron_type != NeuronType.BIAS:
+                    old_link_found = True
+                    break
+
+            if not old_link_found:
+                return
+
+        else:
+            while not old_link_found:
+                chosen_link_index = random.randint(0, len(self.links) - 1)
+
+                from_neuron = self.links[chosen_link_index].from_neuron
+
+                if self.links[chosen_link_index].enabled and not self.links[chosen_link_index].recurrent \
+                        and self.neurons[self.get_element_pos(from_neuron)].neuron_type != NeuronType.BIAS:
+                    old_link_found = True
+
+        self.links[chosen_link_index].enabled = False
+
+        original_weight = self.links[chosen_link_index].weight
+
+        from_neuron = self.links[chosen_link_index].from_neuron
+        to_neuron = self.links[chosen_link_index].to_neuron
+
+        new_depth = (self.neurons[self.get_element_pos(from_neuron)].split_y
+                     + self.neurons[self.get_element_pos(to_neuron)].split_y) / 2
+        new_width = (self.neurons[self.get_element_pos(from_neuron)].split_x
+                     + self.neurons[self.get_element_pos(to_neuron)].split_x) / 2
+
+        innovation_id = innovation_db.check_innovation(from_neuron, to_neuron, InnovationType.NEW_NEURON)
+
+        if innovation_id > 0:
+            neuron_id = innovation_db.get_neuron_id(innovation_id)
+            if self.already_have_this_neuron_id(neuron_id):
+                innovation_id = -1
+
+        if innovation_id < 0:
+            new_neuron_id = innovation_db.create_neuron_innovation(from_neuron, to_neuron,
+                                                                   InnovationType.NEW_NEURON, NeuronType.HIDDEN,
+                                                                   new_width, new_depth)
+
+            self.neurons.append(NeuronGene(NeuronType.HIDDEN, new_neuron_id, new_depth, new_width))
+
+            link1_id = innovation_db.next_number()
+
+            innovation_db.create_link_innovation(from_neuron, new_neuron_id, InnovationType.NEW_LINK)
 
 
     def change_weights(self):
-        pass
-
-
-    def crossover(self):
         pass
 
 

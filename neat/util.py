@@ -10,7 +10,6 @@ class NeuronType(Enum):
     OUTPUT = 4
     NONE = 5
 
-
 class InnovationType(Enum):
     NEW_LINK = 1
     NEW_NEURON = 2
