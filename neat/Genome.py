@@ -1,6 +1,7 @@
 import random
 from math import sqrt
 
+from typing import Sequence
 from neat.InnovationDB import InnovationDB
 from neat.LinkGene import LinkGene
 from neat.NeuronGene import NeuronGene
@@ -43,9 +44,30 @@ class Genome(object):
 
 
     @classmethod
-    def from_inputs_outputs(cls, inputs: int, outputs: int):
+    def from_neurons_and_links(cls,
+              genome_id: int,
+              neurons: Sequence[NeuronGene],
+              links: Sequence[LinkGene],
+              inputs: int,
+              outputs: int) -> 'Genome':
+        ret = cls()
+        ret.genome_id = genome_id
+        ret.phenotype = None
+        ret.links = links
+        ret.neurons = neurons
+        ret.amount_to_spawn = 0
+        ret.fitness = 0
+        ret.adjusted_fitness = 0
+        ret.inputs = inputs
+        ret.outputs = outputs
+        return ret
+
+
+    @classmethod
+    def from_inputs_outputs(cls, genome_id: int, inputs: int, outputs: int):
 
         ret = cls()
+        ret.genome_id = genome_id
         ret.neurons = []
         ret.links = []
 
@@ -267,7 +289,7 @@ class Genome(object):
     # ACCESSOR METHODS
     # ==================================================================================================================
 
-    def num_genes(self):
+    def num_links(self):
         return len(self.links)
 
     def num_neurons(self):
@@ -275,6 +297,3 @@ class Genome(object):
 
     def start_of_links(self):
         return next(iter(self.links))
-
-    def end_of_link(self):
-        return None
