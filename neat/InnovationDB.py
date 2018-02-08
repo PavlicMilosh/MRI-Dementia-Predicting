@@ -1,7 +1,9 @@
 from neat.Innovation import Innovation
 from neat.NeuronGene import NeuronGene
+from neat.LinkGene import LinkGene
 from neat.InovationType import InnovationType
 from neat.NeuronType import NeuronType
+from typing import *
 
 
 class InnovationDB:
@@ -14,6 +16,24 @@ class InnovationDB:
         self.innovations = innovations
         self.next_neuron_id = next_neuron_id
         self.next_innovation_num = next_innovation_num
+
+
+    @classmethod
+    def from_genes(cls, link_genes: Sequence[LinkGene], neuron_genes: Sequence[NeuronGene]) -> 'InnovationDB':
+
+        ret = cls()
+        ret.next_neuron_id = 0
+        ret.next_innovation_num = 0
+
+        # add neurons
+        for neuron_gene in neuron_genes:
+            ret.innovations.append(Innovation.init1(neuron_gene, ret.next_innovation_num, ret.next_neuron_id))
+
+        # add links
+        for link_gene in link_genes:
+            innovation = Innovation.init2(link_gene.from_neuron_id, link_gene.to_neuron_id, InnovationType.NEW_LINK, ret.next_innovation_num)
+            ret.innovations.append(innovation)
+            ret.next_innovation_num += 1
 
 
     def check_innovation(self,

@@ -69,3 +69,4 @@ class Innovation:
         ret.innovation_id = innovation_id
         ret.neuron_type = neuron_type
         return ret
+
