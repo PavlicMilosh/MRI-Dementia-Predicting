@@ -23,7 +23,7 @@ class LinkGene:
                     enabled: bool,
                     innovation_id: int,
                     weight: float,
-                    recurrent: bool):
+                    recurrent: bool) -> 'LinkGene':
         ret = cls()
         ret.from_neuron_id = neuron_in_id
         ret.to_neuron_id = neuron_out_id

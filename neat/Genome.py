@@ -172,7 +172,7 @@ class Genome(object):
             recurrent = True
 
         if innovation_id < 0:
-            innovation_db.create_new_innovation(neuron1_id, neuron2_id, InnovationType.NEW_LINK)
+            innovation_db.create_link_innovation(neuron1_id, neuron2_id, InnovationType.NEW_LINK)
             innovation_id = innovation_db.next_number() - 1
             gene = LinkGene.constructor(neuron1_id, neuron2_id, True, innovation_id, random.uniform(-1, 1), recurrent)
             self.links.append(gene)
@@ -241,11 +241,37 @@ class Genome(object):
                                                                    InnovationType.NEW_NEURON, NeuronType.HIDDEN,
                                                                    new_width, new_depth)
 
-            self.neurons.append(NeuronGene(NeuronType.HIDDEN, new_neuron_id, new_depth, new_width))
+            self.neurons.append(NeuronGene.constructor(NeuronType.HIDDEN, new_neuron_id, new_depth, new_width))
 
             link1_id = innovation_db.next_number()
-
             innovation_db.create_link_innovation(from_neuron, new_neuron_id, InnovationType.NEW_LINK)
+
+            link1 = LinkGene.constructor(from_neuron, new_neuron_id, True, link1_id, 1., False)
+            self.links.append(link1)
+
+            link2_id = innovation_db.next_number()
+            innovation_db.create_link_innovation(new_neuron_id, to_neuron, InnovationType.NEW_LINK)
+
+            link2 = LinkGene.constructor(new_neuron_id, from_neuron, True, link2_id, original_weight, False)
+            self.links.append(link2)
+
+        else:
+            new_neuron_id = innovation_db.get_neuron_id(innovation_id)
+
+            link1_id = innovation_db.check_innovation(from_neuron, new_neuron_id, InnovationType.NEW_LINK)
+            link2_id = innovation_db.check_innovation(new_neuron_id, to_neuron, InnovationType.NEW_LINK)
+
+            if (link1_id < 0) or (link2_id < 0):
+                return
+
+            link1 = LinkGene.constructor(from_neuron, new_neuron_id, True, link1_id, 1., False)
+            link2 = LinkGene.constructor(new_neuron_id, to_neuron, True, link2_id, original_weight, False)
+
+            self.links.append(link1)
+            self.links.append(link2)
+
+            new_neuron = NeuronGene.constructor(NeuronType.HIDDEN, new_neuron_id, new_depth, new_width)
+            self.neurons.append(new_neuron)
 
 
     # WEIGHT MUTATION ==================================================================================================

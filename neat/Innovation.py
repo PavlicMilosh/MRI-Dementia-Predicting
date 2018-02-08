@@ -70,16 +70,3 @@ class Innovation:
         ret.neuron_type = neuron_type
         return ret
 
-
-
-
-
-
-
-
-
-
-
-
-
-

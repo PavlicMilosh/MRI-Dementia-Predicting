@@ -71,7 +71,7 @@ class InnovationDB:
                                  x: float,
                                  y: float):
 
-        innovation = Innovation.init3(neuron_in_id, neuron_out_id, innovation_type, neuron_type, x, y)
+        innovation = Innovation.init3(neuron_in_id, neuron_out_id, innovation_type, self.next_innovation_num, neuron_type, x, y)
 
         if innovation_type == InnovationType.NEW_NEURON:
             innovation.neuron_id = self.next_neuron_id
@@ -84,8 +84,8 @@ class InnovationDB:
 
 
     def create_neuron_from_id(self, neuron_id):
+        tmp = NeuronGene.constructor(NeuronType.HIDDEN, 0, 0, 0)
 
-        tmp = NeuronGene()
         for innovation in self.innovations:
             if innovation.neuron_id == neuron_id:
                 tmp.neuron_type = innovation.neuron_type
