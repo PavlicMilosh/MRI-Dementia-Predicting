@@ -31,9 +31,12 @@ class InnovationDB:
 
         # add links
         for link_gene in link_genes:
-            innovation = Innovation.init2(link_gene.from_neuron_id, link_gene.to_neuron_id, InnovationType.NEW_LINK, ret.next_innovation_num)
+            innovation = Innovation.init2(link_gene.from_neuron_id, link_gene.to_neuron_id,
+                                          InnovationType.NEW_LINK, ret.next_innovation_num)
             ret.innovations.append(innovation)
             ret.next_innovation_num += 1
+
+        return ret
 
 
     def check_innovation(self,
@@ -71,7 +74,8 @@ class InnovationDB:
                                  x: float,
                                  y: float):
 
-        innovation = Innovation.init3(neuron_in_id, neuron_out_id, innovation_type, self.next_innovation_num, neuron_type, x, y)
+        innovation = Innovation.init3(neuron_in_id, neuron_out_id, innovation_type, self.next_innovation_num,
+                                      neuron_type, x, y)
 
         if innovation_type == InnovationType.NEW_NEURON:
             innovation.neuron_id = self.next_neuron_id

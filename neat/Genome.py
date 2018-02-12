@@ -119,6 +119,9 @@ class Genome(object):
     def create_phenotype(self):
         pass
 
+    def delete_phenotype(self):
+        self.phenotype = None
+
 
     # ==================================================================================================================
     # MUTATIONS

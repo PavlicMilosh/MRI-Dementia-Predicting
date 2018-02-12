@@ -1,8 +1,11 @@
+from neat import Constants
+from neat.Constants import *
 from neat.LinkGene import LinkGene
 from neat.ParentType import ParentType
-from random import random
+from random import random, randint
 from neat.Genome import Genome
 from neat.InnovationDB import InnovationDB
+from neat.Species import Species
 
 
 class Ga(object):
@@ -142,3 +145,203 @@ class Ga(object):
                 return
         neuron_ids.append(neuron_id)
 
+
+    def create_phenotypes(self):
+        pass
+
+
+    def calculate_net_depth(self, genome):
+        pass
+
+
+    '''Performs one epoch of genetic algorithm and returns a list of new phenotypes'''
+    def epoch(self, fitness_scores: 'List of floats'):
+        if len(fitness_scores) != len(self.genomes):
+            return
+
+        self.reset_and_kill()
+
+        for gen in range(len(self.genomes)):
+            self.genomes[gen].fitness = fitness_scores[gen]
+
+        self.sort_and_record()
+
+        self.speciate_and_calculate_spawn_levels()
+
+        new_population = []
+        spawned_so_far = 0
+
+        for spc in range(len(self.species)):
+            if spawned_so_far < population_size:
+                num_to_spawn = round(self.species[spc].spawns_required)
+                chosen_best_yet = False
+
+                for i in range(num_to_spawn):
+
+                    if not chosen_best_yet:
+                        baby = self.species[spc].leader
+                        chosen_best_yet = True
+
+                    else:
+                        if self.species[spc].number_of_members() == 1:
+                            baby = self.species[spc].spawn()
+
+                        else:
+                            g1 = self.species[spc].spawn()
+
+                            if random.randrange(0, 1) < crossover_rate:
+                                g2 = self.species[spc].spawn()
+
+                                attempts = 5
+
+                                while (g1.genome_id == g2.genome_id) and attempts > 0:
+                                    g2 = self.species[spc].spawn()
+
+                                if g1.genome_id != g2.genome_id:
+                                    baby = self.crossover(g1, g2)
+
+                            else:
+                                baby = g1
+
+                        self.next_genome_id += 1
+
+                        baby.genome_id = self.next_genome_id
+
+                        if baby.num_neurons() < max_permitted_neurons:
+                            baby.add_neuron(chance_to_add_neuron, self.innovation_db, num_tries_to_find_old_link)
+
+                        baby.add_link(chance_to_add_link, chance_to_add_recurrent_link, self.innovation_db,
+                                      num_tries_to_find_loop, num_tries_to_add_link)
+
+                        baby.mutate_weights(mutation_rate, probability_of_weight_replacement, max_weight_perturbation)
+
+                        baby.mutate_activation_response(activation_mutation_rate, max_activation_perturbation)
+
+                    baby.sort_genes()
+
+                    new_population.append(baby)
+
+                    spawned_so_far += 1
+
+                    if spawned_so_far == population_size:
+                        break
+
+        if spawned_so_far < population_size:
+            rqd = population_size - spawned_so_far
+
+            for i in range(rqd):
+                new_population.append(self.tournament_selection(round(population_size / 5)))
+
+        self.genomes = new_population
+
+        new_phenotypes = []
+
+        for genotype in self.genomes:
+            self.calculate_net_depth(self.genomes[genotype])
+            phenotype = genotype.create_phenotype()
+            new_phenotypes.append(phenotype)
+
+        self.generation += 1
+
+        return new_phenotypes
+
+
+    '''Resets some values ready for the next epoch,
+    and kill all phenotypes and poorly performing species'''
+    def reset_and_kill(self):
+
+        for species in self.species:
+            species.purge()
+
+            if species.gens_no_improvement() > gens_allowed_with_no_improvement \
+                    and species.best_fitness < self.best_ever_fitness:
+                self.species.remove(species)
+
+            for genome in self.genomes:
+                genome.delete_phenotype()
+
+
+    '''Sorts the population by fitness descending and keeps record of the best n genomes
+    and updates any fitness statistics accordingly'''
+    def sort_and_record(self):
+        self.genomes.sort()
+        self.genomes.reverse()
+
+        if self.genomes[0].fitness > self.best_ever_fitness:
+            self.best_ever_fitness = self.genomes[0].fitness
+
+        self.best_genomes.clear()
+        for index in range(best_sweepers_num):
+            self.best_genomes.append(self.genomes[index])
+
+
+    '''Places individuals into their respecting species by calculating compatibility
+    with other members of the population and niching accordingly. 
+    Adjusting the fitness scores of each individual by species age and by sharing
+    and determines how many offsprings each individual should spawn'''
+    def speciate_and_calculate_spawn_levels(self):
+
+        self.adjust_compatibility_threshold()
+
+        for genome in self.genomes:
+            for species in self.species:
+
+                compatibility = genome.get_compatibility_score(species.leader)
+
+                if compatibility < compatibility_threshold:
+                    species.add_member(genome)
+                    genome.species = species
+                    break
+            else:
+                self.species.append(Species.init(genome, self.next_species_id))
+                self.next_species_id += 1
+
+        self.adjust_species_fitness()
+
+        for genome in self.genomes:
+            self.total_fitness_adj += genome.adjusted_fitness
+
+        self.avg_fitness_adj = self.total_fitness_adj / len(self.genomes)
+
+        for genome in self.genomes:
+            to_spawn = genome.adjusted_fitness / self.avg_fitness_adj
+            genome.amount_to_spawn = to_spawn
+
+        for species in self.species:
+            species.calculate_spawn_amount()
+
+
+    '''Automatically adjusts the compatibility threshold in an attempt
+    to keep the number of species below the maximum'''
+    def adjust_compatibility_threshold(self):
+
+        if max_number_of_species < 1:
+            return
+
+        threshold_increment = 0.01
+
+        if len(self.species) > max_number_of_species:
+            Constants.compatibility_threshold += threshold_increment
+
+        elif len(self.species) < 2:
+            Constants.compatibility_threshold -= threshold_increment
+
+
+    '''Iterates through each species and calls adjust_fitness for each species'''
+    def adjust_species_fitness(self):
+        for species in self.species:
+            species.adjust_fitness()
+
+
+    def tournament_selection(self, num_comparisons: int):
+        best_fitness_so_far = 0
+        chosen = 0
+
+        for i in range(num_comparisons):
+            this_try = randint(0, len(self.genomes) - 1)
+
+            if self.genomes[this_try].fitness > best_fitness_so_far:
+                chosen = this_try
+                best_fitness_so_far = self.genomes[this_try].fitness
+
+        return self.genomes[chosen]
