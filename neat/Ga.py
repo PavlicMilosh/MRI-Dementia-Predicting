@@ -1,11 +1,14 @@
+from random import random, randint
+from typing import List
+
 from neat import Constants
 from neat.Constants import *
-from neat.LinkGene import LinkGene
-from neat.ParentType import ParentType
-from random import random, randint
 from neat.Genome import Genome
 from neat.InnovationDB import InnovationDB
+from neat.LinkGene import LinkGene
+from neat.ParentType import ParentType
 from neat.Species import Species
+from neat.SplitDepth import SplitDepth
 
 
 class Ga(object):
@@ -139,9 +142,9 @@ class Ga(object):
         return baby_genome
 
 
-    def add_neuron_id(self, neuron_id: int, neuron_ids: list):
+    def add_neuron_id(self, neuron_id: int, neuron_ids: List[int]):
         for n in neuron_ids:
-            if n.neuron_id == neuron_id:
+            if n == neuron_id:
                 return
         neuron_ids.append(neuron_id)
 
@@ -161,7 +164,6 @@ class Ga(object):
 
     '''Calculates network depth of a given genome'''
     def calculate_net_depth(self, genome: Genome):
-        pass
         max_so_far = 0
 
         for nd in range(len(genome.num_neurons())):
@@ -172,7 +174,7 @@ class Ga(object):
         genome.depth = max_so_far + 2
 
     '''Performs one epoch of genetic algorithm and returns a list of new phenotypes'''
-    def epoch(self, fitness_scores: 'List of floats'):
+    def epoch(self, fitness_scores: List[float]):
         if len(fitness_scores) != len(self.genomes):
             return
 
@@ -363,11 +365,11 @@ class Ga(object):
 
         return self.genomes[chosen]
 
-    def split(self, low: float, high: float, depth: float):
+    def split(self, low: float, high: float, depth: float) -> List[SplitDepth]:
         splits = []
         span = high - low
 
-        splits.append(1)  # TODO: what is split_depth?
+        splits.append(SplitDepth(low + span / 2, depth + 1))
 
         if depth > 6:
             return splits
@@ -385,3 +387,5 @@ class Ga(object):
             self.calculate_net_depth(genome)
 
             brains.append(genome.create_phenotype())
+
+        return brains
