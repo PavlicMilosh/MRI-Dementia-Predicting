@@ -19,7 +19,7 @@ class InnovationDB:
 
 
     @classmethod
-    def from_genes(cls, link_genes: Sequence[LinkGene], neuron_genes: Sequence[NeuronGene]) -> 'InnovationDB':
+    def from_genes(cls, link_genes: List[LinkGene], neuron_genes: List[NeuronGene]) -> 'InnovationDB':
 
         ret = cls()
         ret.next_neuron_id = 0

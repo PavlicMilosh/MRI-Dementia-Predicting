@@ -1,11 +1,11 @@
 import random
 from math import sqrt
+from typing import List
 
-from typing import Sequence
 from neat.InnovationDB import InnovationDB
+from neat.InovationType import InnovationType
 from neat.LinkGene import LinkGene
 from neat.NeuronGene import NeuronGene
-from neat.InovationType import InnovationType
 from neat.NeuronType import NeuronType
 
 
@@ -17,8 +17,8 @@ class Genome(object):
 
     def __init__(self,
                  genome_id: int,
-                 neurons: list,
-                 links: list,
+                 neurons: List[NeuronGene],
+                 links: List[LinkGene],
                  phenotype,
                  fitness: float,
                  adjusted_fitness: float,
@@ -27,7 +27,8 @@ class Genome(object):
                  num_outputs: int,
                  species: int,
                  inputs: int,
-                 outputs: int):
+                 outputs: int,
+                 depth: int):
 
         self.genome_id = genome_id
         self.neurons = neurons
@@ -41,15 +42,16 @@ class Genome(object):
         self.species = species
         self.inputs = inputs
         self.outputs = outputs
+        self.depth = depth
 
 
     @classmethod
     def from_neurons_and_links(cls,
-              genome_id: int,
-              neurons: Sequence[NeuronGene],
-              links: Sequence[LinkGene],
-              inputs: int,
-              outputs: int) -> 'Genome':
+                               genome_id: int,
+                               neurons: List[NeuronGene],
+                               links: List[LinkGene],
+                               inputs: int,
+                               outputs: int) -> 'Genome':
         ret = cls()
         ret.genome_id = genome_id
         ret.phenotype = None
@@ -77,15 +79,17 @@ class Genome(object):
         for i in range(outputs):
             ret.neurons.append(NeuronGene(i + inputs, NeuronType.OUTPUT, False, 0, 1, 1))
             for j in range(inputs):
-                ret.links.append(LinkGene(ret.neurons[j], ret.neurons[i + inputs], 1, True, False, 0))
+                ret.links.append(LinkGene(ret.neurons[j].neuron_id,
+                                          ret.neurons[i + inputs].neuron_id,
+                                          1, True, False, 0))
 
         return ret
 
 
     @classmethod
     def from_links_neurons(cls,
-                           neurons: list,
-                           links: list,
+                           neurons: List[NeuronGene],
+                           links: List[LinkGene],
                            inputs: int,
                            outputs: int):
         ret = cls()
@@ -123,12 +127,7 @@ class Genome(object):
         self.phenotype = None
 
 
-    # ==================================================================================================================
-    # MUTATIONS
-    # ==================================================================================================================
-
-    # ADD LINK =========================================================================================================
-
+    '''Tries to do a new link mutation'''
     def add_link(self, mutation_rate: float, chance_of_looped: float, innovation_db: InnovationDB,
                  num_tries_to_find_loop: int, num_tries_to_add_link: int):
 
@@ -154,10 +153,10 @@ class Genome(object):
         else:
             for i in range(num_tries_to_add_link):
                 neuron1_id = self.neurons[random.randint(0, len(self.neurons) - 1)].neuron_id
-                neuron2_id = self.neurons[random.randint(self.inputs + 1, len(self.neurons) - 1)].id
+                neuron2_id = self.neurons[random.randint(self.inputs + 1, len(self.neurons) - 1)].neuron_id
                 # second neuron must not be input or bias
                 if self.neurons[self.get_element_pos(neuron2_id)].neuron_type != NeuronType.INPUT \
-                        and self.neurons[self.get_element_pos(neuron2_id)].neuronType != NeuronType.BIAS:
+                        and self.neurons[self.get_element_pos(neuron2_id)].neuron_type != NeuronType.BIAS:
                     continue
 
                 if self.duplicate_link(neuron1_id, neuron2_id) or neuron1_id == neuron2_id:
@@ -184,8 +183,7 @@ class Genome(object):
             self.links.append(gene)
 
 
-    # ADD NEURON =======================================================================================================
-
+    '''Tries to do a new neuron mutation'''
     def add_neuron(self, mutation_rate: float, innovation_db: InnovationDB, num_tries_to_find_old_link: int):
 
         if random.uniform(0, 1) > mutation_rate:
@@ -200,7 +198,7 @@ class Genome(object):
             for i in range(num_tries_to_find_old_link):
                 chosen_link_index = random.randint(0, len(self.links) - 1 - int(sqrt(len(self.links))))
 
-                from_neuron = self.links[chosen_link_index].from_neuron
+                from_neuron = self.links[chosen_link_index].from_neuron_id
 
                 if self.links[chosen_link_index].enabled and not self.links[chosen_link_index].recurrent \
                         and self.neurons[self.get_element_pos(from_neuron)].neuron_type != NeuronType.BIAS:
@@ -214,7 +212,7 @@ class Genome(object):
             while not old_link_found:
                 chosen_link_index = random.randint(0, len(self.links) - 1)
 
-                from_neuron = self.links[chosen_link_index].from_neuron
+                from_neuron = self.links[chosen_link_index].from_neuron_id
 
                 if self.links[chosen_link_index].enabled and not self.links[chosen_link_index].recurrent \
                         and self.neurons[self.get_element_pos(from_neuron)].neuron_type != NeuronType.BIAS:
@@ -224,8 +222,8 @@ class Genome(object):
 
         original_weight = self.links[chosen_link_index].weight
 
-        from_neuron = self.links[chosen_link_index].from_neuron
-        to_neuron = self.links[chosen_link_index].to_neuron
+        from_neuron = self.links[chosen_link_index].from_neuron_id
+        to_neuron = self.links[chosen_link_index].to_neuron_id
 
         new_depth = (self.neurons[self.get_element_pos(from_neuron)].split_y
                      + self.neurons[self.get_element_pos(to_neuron)].split_y) / 2
@@ -277,8 +275,6 @@ class Genome(object):
             self.neurons.append(new_neuron)
 
 
-    # WEIGHT MUTATION ==================================================================================================
-
     def mutate_weights(self,
                        mutation_rate: float,
                        new_mutation_probability: float,
@@ -292,8 +288,6 @@ class Genome(object):
                     self.links[idx].weight = random.uniform(-1, 1) * max_perturbation
 
 
-    # ACTIVATION MUTATION ==============================================================================================
-
     def mutate_activation_response(self,
                                    mutation_rate: float,
                                    max_perturbation: float):
@@ -305,10 +299,6 @@ class Genome(object):
     def __lt__(self, other):
         return self.fitness < other.fitness
 
-
-    # ==================================================================================================================
-    # FITNESS
-    # ==================================================================================================================
 
     def fitness(self):
         pass
@@ -326,3 +316,6 @@ class Genome(object):
 
     def start_of_links(self):
         return next(iter(self.links))
+
+    def split_y(self, index):
+        return self.neurons[index].split_y

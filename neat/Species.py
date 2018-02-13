@@ -1,4 +1,5 @@
 import random
+from typing import List
 
 from neat.Constants import young_age_threshold, young_fitness_bonus, old_age_threshold, old_age_penalty, survival_rate
 from neat.Genome import Genome
@@ -6,7 +7,7 @@ from neat.Genome import Genome
 
 class Species:
 
-    def __init__(self, members: 'List of Genomes', leader: Genome, species_id: int, best_fitness: float,
+    def __init__(self, members: List[Genome], leader: Genome, species_id: int, best_fitness: float,
                  gens_no_improvement: int, age: int, spawns_required: float):
         self.members = members
         self.leader = leader

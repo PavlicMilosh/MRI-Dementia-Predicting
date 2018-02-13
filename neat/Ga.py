@@ -1,11 +1,14 @@
+from random import random, randint
+from typing import List
+
 from neat import Constants
 from neat.Constants import *
-from neat.LinkGene import LinkGene
-from neat.ParentType import ParentType
-from random import random, randint
 from neat.Genome import Genome
 from neat.InnovationDB import InnovationDB
+from neat.LinkGene import LinkGene
+from neat.ParentType import ParentType
 from neat.Species import Species
+from neat.SplitDepth import SplitDepth
 
 
 class Ga(object):
@@ -139,23 +142,39 @@ class Ga(object):
         return baby_genome
 
 
-    def add_neuron_id(self, neuron_id: int, neuron_ids: list):
+    def add_neuron_id(self, neuron_id: int, neuron_ids: List[int]):
         for n in neuron_ids:
-            if n.neuron_id == neuron_id:
+            if n == neuron_id:
                 return
         neuron_ids.append(neuron_id)
 
 
+    '''Creates and returns phenotypes from the genomes'''
     def create_phenotypes(self):
-        pass
+        networks = []
+        for genome in self.genomes:
+            self.calculate_net_depth(genome)
+
+            network = genome.create_phenotype()
+
+            networks.append(network)
+
+        return networks
 
 
-    def calculate_net_depth(self, genome):
-        pass
+    '''Calculates network depth of a given genome'''
+    def calculate_net_depth(self, genome: Genome):
+        max_so_far = 0
 
+        for nd in range(len(genome.num_neurons())):
+            for split in self.splits:
+                if genome.split_y(nd) > split.val:
+                    max_so_far = split.depth
+
+        genome.depth = max_so_far + 2
 
     '''Performs one epoch of genetic algorithm and returns a list of new phenotypes'''
-    def epoch(self, fitness_scores: 'List of floats'):
+    def epoch(self, fitness_scores: List[float]):
         if len(fitness_scores) != len(self.genomes):
             return
 
@@ -345,3 +364,28 @@ class Ga(object):
                 best_fitness_so_far = self.genomes[this_try].fitness
 
         return self.genomes[chosen]
+
+    def split(self, low: float, high: float, depth: float) -> List[SplitDepth]:
+        splits = []
+        span = high - low
+
+        splits.append(SplitDepth(low + span / 2, depth + 1))
+
+        if depth > 6:
+            return splits
+        else:
+            self.split(low, low + span / 2, depth + 1)
+            self.split(low + span / 2, high, depth + 1)
+
+            return splits
+
+
+    def get_best_phenotypes_from_last_generation(self):
+        brains = []
+
+        for genome in self.best_genomes:
+            self.calculate_net_depth(genome)
+
+            brains.append(genome.create_phenotype())
+
+        return brains

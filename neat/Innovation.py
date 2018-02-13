@@ -1,6 +1,6 @@
+from neat.InovationType import InnovationType
 from neat.NeuronGene import NeuronGene
 from neat.NeuronType import NeuronType
-from neat.InovationType import InnovationType
 
 
 class Innovation:
