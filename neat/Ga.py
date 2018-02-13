@@ -146,13 +146,30 @@ class Ga(object):
         neuron_ids.append(neuron_id)
 
 
+    '''Creates and returns phenotypes from the genomes'''
     def create_phenotypes(self):
+        networks = []
+        for genome in self.genomes:
+            self.calculate_net_depth(genome)
+
+            network = genome.create_phenotype()
+
+            networks.append(network)
+
+        return networks
+
+
+    '''Calculates network depth of a given genome'''
+    def calculate_net_depth(self, genome: Genome):
         pass
+        max_so_far = 0
 
+        for nd in range(len(genome.num_neurons())):
+            for split in self.splits:
+                if genome.split_y(nd) > split.val:
+                    max_so_far = split.depth
 
-    def calculate_net_depth(self, genome):
-        pass
-
+        genome.depth = max_so_far + 2
 
     '''Performs one epoch of genetic algorithm and returns a list of new phenotypes'''
     def epoch(self, fitness_scores: 'List of floats'):
@@ -345,3 +362,26 @@ class Ga(object):
                 best_fitness_so_far = self.genomes[this_try].fitness
 
         return self.genomes[chosen]
+
+    def split(self, low: float, high: float, depth: float):
+        splits = []
+        span = high - low
+
+        splits.append(1)  # TODO: what is split_depth?
+
+        if depth > 6:
+            return splits
+        else:
+            self.split(low, low + span / 2, depth + 1)
+            self.split(low + span / 2, high, depth + 1)
+
+            return splits
+
+
+    def get_best_phenotypes_from_last_generation(self):
+        brains = []
+
+        for genome in self.best_genomes:
+            self.calculate_net_depth(genome)
+
+            brains.append(genome.create_phenotype())

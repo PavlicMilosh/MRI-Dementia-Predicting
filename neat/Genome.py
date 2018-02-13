@@ -27,7 +27,8 @@ class Genome(object):
                  num_outputs: int,
                  species: int,
                  inputs: int,
-                 outputs: int):
+                 outputs: int,
+                 depth: int):
 
         self.genome_id = genome_id
         self.neurons = neurons
@@ -41,15 +42,16 @@ class Genome(object):
         self.species = species
         self.inputs = inputs
         self.outputs = outputs
+        self.depth = depth
 
 
     @classmethod
     def from_neurons_and_links(cls,
-              genome_id: int,
-              neurons: Sequence[NeuronGene],
-              links: Sequence[LinkGene],
-              inputs: int,
-              outputs: int) -> 'Genome':
+                               genome_id: int,
+                               neurons: Sequence[NeuronGene],
+                               links: Sequence[LinkGene],
+                               inputs: int,
+                               outputs: int) -> 'Genome':
         ret = cls()
         ret.genome_id = genome_id
         ret.phenotype = None
@@ -326,3 +328,6 @@ class Genome(object):
 
     def start_of_links(self):
         return next(iter(self.links))
+
+    def split_y(self, index):
+        return self.neurons[index].split_y
