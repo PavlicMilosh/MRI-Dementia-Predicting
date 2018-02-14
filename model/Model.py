@@ -1,8 +1,9 @@
 import tensorflow as tf
+import numpy as np
 
 
 class Model:
-    def __init__(self, neurons, input_neurons_num):
+    def __init__(self, neurons, links, input_neurons_num):
         """
         Constructor.
         :param neurons: array list of neurons
@@ -17,18 +18,24 @@ class Model:
         # list of all neurons in graph; list is supposed to be sorted in way that
         # fist 'input_neurons_num' nodes are input, then goes one output, then hidden nodes
         self.neurons = neurons
+        # list of all links in graph
+        self.links = links
         # number of inputs
         self.input_neurons_num = input_neurons_num
 
-    def build_model(self, links):
+        # ------- TensorFlow attributes -------
+        # TensorFlow graph
+        self.graph = None
+        # inputs in graph
+        self.inputs = {}
+        # output from graph
+        self.output = None
+
+    def build_model(self):
         """
         Fill input_neurons, connections and weights.
-        :param links: list of links where each link has:
-            1. from_neuron_id
-            2. to_neuron_id
-            3. weight
         """
-        for link in links:
+        for link in self.links:
             # if from neuron is input to graph, add it to input_neurons set
             if self.is_input_neuron(link.from_neuron_id):
                 self.input_neurons.add(link.from_neuron_id)
@@ -48,14 +55,13 @@ class Model:
         :return inputs: inputs to graph
         :return output: output of graph
         """
-        graph = tf.Graph()
-        with graph.as_default():
+        self.graph = tf.Graph()
+        with self.graph.as_default():
             operations = {}
-            # inputs in graph
-            inputs = {}
             # create Variables for input vertices
             for neuron_id in self.input_neurons:
-                inputs[neuron_id] = tf.get_variable(name=str(neuron_id), shape=(), initializer=tf.zeros_initializer)
+                self.inputs[neuron_id] = tf.get_variable(name=str(neuron_id), shape=(),
+                                                         initializer=tf.zeros_initializer)
 
             # create input & output vertices
             for neuron_id, input_neuron_ids in self.connections.items():
@@ -66,7 +72,7 @@ class Model:
 
                 for input_neuron_id in input_neuron_ids:
                     if self.is_input_neuron(input_neuron_id):
-                        vertex = inputs[input_neuron_id]
+                        vertex = self.inputs[input_neuron_id]
                     else:
                         vertex = operations[input_neuron_id]
 
@@ -83,8 +89,12 @@ class Model:
 
                 operations[neuron_id] = activation
                 if self.is_output_neuron(neuron_id):
-                    output = activation
-        return graph, inputs, output
+                    self.output = activation
+        return self.graph, self.inputs, self.output
+
+    def build(self):
+        self.build_model()
+        self.build_graph()
 
     def is_output_neuron(self, neuron_id):
         """
@@ -106,26 +116,42 @@ class Model:
         return False
 
     def calculate_loss(self, X, y):
-        pass
+        """
+        Predict category for each row of data set, compare it with truth category and return how good predictions are.
+        Lower value means better graph.
+        :param X: data set
+        :param y: true categories
+        :return:
+        """
+        probs = []
+        with tf.Session(graph=self.graph) as sess:
+            sess.run(tf.global_variables_initializer())
+            for x in X:
+                probs.append(sess.run(self.output, feed_dict=self.feed(x)))
+
+        num_examples = X.shape[0]
+        return np.sum(np.square(np.subtract(probs, y))) / num_examples
+
+    def feed(self, data):
+        """
+        Create feed_dict for session.
+        :param data:
+        :return:
+        """
+        feed = {}
+        for i in range(len(self.inputs)):
+            feed[self.inputs[i + 1]] = data[i]
+        return feed
 
     def predict(self, X):
         pass
 
-    def save_graph(self):
-        pass
-
     @staticmethod
-    def save_graph_summary(graph):
+    def save_graph(graph):
         """
         Save the computation graph to a TensorBoard summary file.
         When file is saved, in a new terminal, launch TensorBoard with the following shell command:
             tensorboard --logdir .
-
-        :param graph: tf.Graph
         """
         writer = tf.summary.FileWriter('.')
         writer.add_graph(graph)
-
-    @staticmethod
-    def create_feed(self, X):
-        pass
