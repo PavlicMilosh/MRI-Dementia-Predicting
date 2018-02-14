@@ -6,9 +6,23 @@ from neat.Genome import Genome
 
 
 class Species:
+    """
+    Class represents species.
+    """
 
-    def __init__(self, members: List[Genome], leader: Genome, species_id: int, best_fitness: float,
-                 gens_no_improvement: int, age: int, spawns_required: float):
+    # ==================================================================================================================
+    # CONSTRUCTORS
+    # ==================================================================================================================
+
+    def __init__(self,
+                 members: List[Genome],
+                 leader: Genome,
+                 species_id: int,
+                 best_fitness: float,
+                 gens_no_improvement: int,
+                 age: int,
+                 spawns_required: float):
+
         self.members = members
         self.leader = leader
         self.species_id = species_id
@@ -17,8 +31,16 @@ class Species:
         self.age = age
         self.spawns_required = spawns_required
 
+
     @classmethod
     def init(cls, first: Genome, species_id: int):
+        """
+        Creates species
+
+        :param first:       Genome  -
+        :param species_id:  int     - id of the species
+        :return:
+        """
         ret = cls()
         ret.species_id = species_id
         ret.best_fitness = first.fitness
@@ -29,7 +51,17 @@ class Species:
         return ret
 
 
+    # ==================================================================================================================
+    # METHODS
+    # ==================================================================================================================
+
+
     def add_member(self, new: Genome):
+        """
+        Adds new member to species.
+
+        :param new: Genome  - new member
+        """
         if new.fitness > self.best_fitness:
             self.best_fitness = new.fitness
             self.gens_no_improvement = 0
@@ -39,6 +71,9 @@ class Species:
 
 
     def purge(self):
+        """
+        Purges species, deletes all members.
+        """
         del self.members[:]
 
         self.age += 1
@@ -47,6 +82,9 @@ class Species:
 
 
     def adjust_fitness(self):
+        """
+        Adjusts fitness function.
+        """
         total = 0
         for genome in self.members:
             fitness = genome.fitness
@@ -62,11 +100,19 @@ class Species:
 
 
     def calculate_spawn_amount(self):
+        """
+        Calculates number of genomes to be spawned.
+        """
         for genome in self.members:
             self.spawns_required += genome.amount_to_spawn
 
 
-    def spawn(self):
+    def spawn(self) -> Genome:
+        """
+        Spawns new genome.
+
+        :return: Genome     - baby genome
+        """
         if len(self.members) == 1:
             baby = self.members[0]
 
@@ -76,6 +122,10 @@ class Species:
 
         return baby
 
+
+    # ==================================================================================================================
+    # ACCESSOR METHODS
+    # ==================================================================================================================
 
     def number_of_members(self):
         return len(self.members)

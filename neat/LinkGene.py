@@ -1,4 +1,7 @@
 class LinkGene:
+    """
+    Class represents a link gene.
+    """
 
     def __init__(self,
                  from_neuron_id: int,

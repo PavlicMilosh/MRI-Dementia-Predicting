@@ -2,6 +2,9 @@ from neat.NeuronType import NeuronType
 
 
 class NeuronGene:
+    """
+    Class represents a neuron gene.
+    """
 
     def __init__(self,
                  neuron_id: int,

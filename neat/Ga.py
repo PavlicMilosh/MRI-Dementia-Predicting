@@ -12,6 +12,9 @@ from neat.SplitDepth import SplitDepth
 
 
 class Ga(object):
+    """
+    Class represents genetic algorithm
+    """
 
     def __init__(self,
                  population_size: int,
@@ -56,15 +59,18 @@ class Ga(object):
         self.innovationDB = InnovationDB.from_genes(genome.links, genome.neurons)
 
 
-    # ======================================================================================================================
-    # CROSSOVER
-    # ======================================================================================================================
-
     def crossover(self, mother: Genome, father: Genome) -> Genome:
+        """
+        Performs a crossover between two genomes, returns a new combination (baby genome)
+
+        :param mother:  Genome      - one parent for crossover
+        :param father:  Genome      - other parent for crossover
+        :return:        Genome      - baby genome
+        """
 
         best_parent = None
 
-        # choose best parent
+        # choose the best parent
         if mother.fitness() == father.fitness():
             if mother.num_links() == father.num_links():
                 best_parent = ParentType.MOTHER if random.uniform(0, 1) > 0.5 else ParentType.FATHER
@@ -143,14 +149,25 @@ class Ga(object):
 
 
     def add_neuron_id(self, neuron_id: int, neuron_ids: List[int]):
+        """
+        Adds neuron id if it doesn't exists in the list.
+
+        :param neuron_id:   int         - Id of neuron to be added
+        :param neuron_ids:  List[int]   -List of neurons
+        :return:
+        """
         for n in neuron_ids:
             if n == neuron_id:
                 return
         neuron_ids.append(neuron_id)
 
 
-    '''Creates and returns phenotypes from the genomes'''
     def create_phenotypes(self):
+        """
+        Creates and returns phenotypes from the genomes.
+
+        :return:
+        """
         networks = []
         for genome in self.genomes:
             self.calculate_net_depth(genome)
@@ -162,8 +179,13 @@ class Ga(object):
         return networks
 
 
-    '''Calculates network depth of a given genome'''
     def calculate_net_depth(self, genome: Genome):
+        """
+        Calculates network depth of a given genome.
+
+        :param genome: Genome
+        :return:
+        """
         max_so_far = 0
 
         for nd in range(len(genome.num_neurons())):
@@ -173,10 +195,17 @@ class Ga(object):
 
         genome.depth = max_so_far + 2
 
-    '''Performs one epoch of genetic algorithm and returns a list of new phenotypes'''
+
     def epoch(self, fitness_scores: List[float]):
+        """
+        Performs one epoch of genetic algorithm and returns a list of new phenotypes.
+
+        :param fitness_scores:  List[float]           - scores
+        :return:                List[Phenotype]       - phenotypes
+        """
+
         if len(fitness_scores) != len(self.genomes):
-            return
+            return None
 
         self.reset_and_kill()
 
@@ -265,9 +294,11 @@ class Ga(object):
         return new_phenotypes
 
 
-    '''Resets some values ready for the next epoch,
-    and kill all phenotypes and poorly performing species'''
     def reset_and_kill(self):
+        """
+        Resets some values ready for the next epoch,
+        and kill all phenotypes and poorly performing species.
+        """
 
         for species in self.species:
             species.purge()
@@ -280,9 +311,11 @@ class Ga(object):
                 genome.delete_phenotype()
 
 
-    '''Sorts the population by fitness descending and keeps record of the best n genomes
-    and updates any fitness statistics accordingly'''
     def sort_and_record(self):
+        """
+        Sorts the population by fitness descending and keeps record of the best n genomes
+        and updates any fitness statistics accordingly.
+        """
         self.genomes.sort()
         self.genomes.reverse()
 
@@ -294,11 +327,13 @@ class Ga(object):
             self.best_genomes.append(self.genomes[index])
 
 
-    '''Places individuals into their respecting species by calculating compatibility
-    with other members of the population and niching accordingly. 
-    Adjusting the fitness scores of each individual by species age and by sharing
-    and determines how many offsprings each individual should spawn'''
     def speciate_and_calculate_spawn_levels(self):
+        """
+        Places individuals into their respecting species by calculating compatibility
+        with other members of the population and niching accordingly.
+        Adjusting the fitness scores of each individual by species age and by sharing
+        and determines how many offsprings each individual should spawn.
+        """
 
         self.adjust_compatibility_threshold()
 
@@ -330,9 +365,11 @@ class Ga(object):
             species.calculate_spawn_amount()
 
 
-    '''Automatically adjusts the compatibility threshold in an attempt
-    to keep the number of species below the maximum'''
     def adjust_compatibility_threshold(self):
+        """
+        Automatically adjusts the compatibility threshold in an attempt
+        to keep the number of species below the maximum.
+        """
 
         if max_number_of_species < 1:
             return
@@ -346,13 +383,20 @@ class Ga(object):
             Constants.compatibility_threshold -= threshold_increment
 
 
-    '''Iterates through each species and calls adjust_fitness for each species'''
     def adjust_species_fitness(self):
+        """
+        Iterates through each species and calls adjust_fitness for each species.
+        """
         for species in self.species:
             species.adjust_fitness()
 
 
-    def tournament_selection(self, num_comparisons: int):
+    def tournament_selection(self, num_comparisons: int) -> Genome:
+        """
+
+        :param num_comparisons: int     -
+        :return:                Genome  - chosen genome
+        """
         best_fitness_so_far = 0
         chosen = 0
 
@@ -365,7 +409,15 @@ class Ga(object):
 
         return self.genomes[chosen]
 
+
     def split(self, low: float, high: float, depth: float) -> List[SplitDepth]:
+        """
+
+        :param low:     float               -
+        :param high:    float               -
+        :param depth:   float               -
+        :return:        List[SplitDepth]    -
+        """
         splits = []
         span = high - low
 
@@ -381,6 +433,10 @@ class Ga(object):
 
 
     def get_best_phenotypes_from_last_generation(self):
+        """
+
+        :return:
+        """
         brains = []
 
         for genome in self.best_genomes:

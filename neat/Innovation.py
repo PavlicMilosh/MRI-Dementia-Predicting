@@ -4,6 +4,9 @@ from neat.NeuronType import NeuronType
 
 
 class Innovation:
+    """
+    Class represents one innovation.
+    """
 
     def __init__(self,
                  innovation_id: int,
