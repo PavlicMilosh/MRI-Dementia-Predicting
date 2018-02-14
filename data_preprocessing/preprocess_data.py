@@ -133,11 +133,11 @@ if __name__ == "__main__":
 
     data = fix_missing_data_mean(data)
     data = encode_categorical_data(data)
-
+    print(data.head())
     # remove unimportant features
     for x in ['Subject ID', 'MRI ID', 'Visit', 'Hand']:
         data.drop(x, axis=1, inplace=True)
-
+    print(data.head())
     # split dataset
     X = data.iloc[:, 1:]
     y = data.iloc[:, 0]
