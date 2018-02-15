@@ -25,8 +25,8 @@ class Genome(object):
                  neurons: List[NeuronGene] = [],
                  links: List[LinkGene] = [],
                  phenotype = None,
-                 fitness: float = 0,
-                 adjusted_fitness: float = 0,
+                 fitness: float = 0.0,
+                 adjusted_fitness: float = 0.0,
                  amount_to_spawn: int = 0,
                  num_inputs: int = 0,
                  num_outputs: int = 0,
@@ -92,6 +92,8 @@ class Genome(object):
         """
 
         ret = cls()
+        ret.inputs = inputs
+        ret.outputs = outputs
         ret.genome_id = genome_id
         ret.neurons = []
         ret.links = []
@@ -341,7 +343,7 @@ class Genome(object):
     # ==================================================================================================================
 
     def create_phenotype(self):
-        self.model = Model.Model(self.neurons, self.links)
+        self.model = Model.Model(self.neurons, self.links, self.inputs)
         self.model.build()
         return self.model
 

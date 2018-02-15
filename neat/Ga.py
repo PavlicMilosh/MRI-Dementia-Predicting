@@ -25,9 +25,9 @@ class Ga(object):
                  next_genome_id: int            = 0,
                  next_species_id: int           = 0,
                  fittest_genome: Genome         = None,
-                 best_ever_fitness: float       = 0,
-                 total_fitness_adj: float       = 0,
-                 avg_fitness_adj: float         = 0):
+                 best_ever_fitness: float       = 0.0,
+                 total_fitness_adj: float       = 0.0,
+                 avg_fitness_adj: float         = 0.0):
 
         self.inputs = inputs
         self.outputs = outputs
@@ -188,7 +188,7 @@ class Ga(object):
         """
         max_so_far = 0
 
-        for nd in range(len(genome.num_neurons())):
+        for nd in range(genome.num_neurons()):
             for split in self.splits:
                 if genome.split_y(nd) > split.val:
                     max_so_far = split.depth
@@ -203,6 +203,7 @@ class Ga(object):
         :param fitness_scores:  List[float]           - scores
         :return:                List[Phenotype]       - phenotypes
         """
+        print("Epoch: " + str(self.generation) + ", Best ever fitness: " + str(self.best_ever_fitness))
 
         if len(fitness_scores) != len(self.genomes):
             return None

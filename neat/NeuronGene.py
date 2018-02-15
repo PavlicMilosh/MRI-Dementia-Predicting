@@ -10,7 +10,7 @@ class NeuronGene:
                  neuron_id: int = 0,
                  neuron_type: NeuronType = None,
                  recurrent: bool = False,
-                 activation_response: float = 0,
+                 activation_response: float = 0.0,
                  split_x: int = 0,
                  split_y: int = 0):
 

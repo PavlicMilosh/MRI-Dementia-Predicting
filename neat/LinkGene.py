@@ -6,7 +6,7 @@ class LinkGene:
     def __init__(self,
                  from_neuron_id: int    = 0,
                  to_neuron_id: int      = 0,
-                 weight: float          = 0,
+                 weight: float          = 0.0,
                  enabled: bool          = False,
                  recurrent: bool        = False,
                  innovation_id: int     = 0):

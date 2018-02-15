@@ -6,23 +6,21 @@ from neat.Ga import Ga
 def evolve_networks(pop_size: int, num_inputs: int, num_outputs: int):
     ga = Ga(pop_size, num_inputs, num_outputs)
 
-    phenotypes = ga.create_phenotypes()
-
-    x_train, y_train = get_training_data()
+    ga.create_phenotypes()
 
     while True:
         fitness_scores = []
-        for phenotype in phenotypes:
-            fitness_scores.append(phenotype.calculate_loss(x_train, y_train))
+        for genotype in ga.genomes:
+            fitness_scores.append(genotype.get_fitness())
 
-        phenotypes = ga.epoch(fitness_scores)
+        ga.epoch(fitness_scores)
 
         if ga.best_genomes[0].fitness > epsilon or ga.generation > max_generation:
             return ga.fittest_genome
 
 
 if __name__ == '__main__':
-    best_network = evolve_networks(population_size, 15, 1)
+    best_network = evolve_networks(population_size, 4, 1)
     model = best_network.phenotype.save_graph()
     # do evaluation with evaluation set
     x_test, y_test = get_test_data()

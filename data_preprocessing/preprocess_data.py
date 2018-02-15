@@ -155,7 +155,7 @@ def get_test_data(path="../data/PCA/"):
 
 def get_data():
     # importing the dataset
-    data = pd.read_csv('../data/oasis_longitudinal.csv')
+    data = pd.read_csv('D:\\Machine Learning\\Soft Computing\\MRI-Dementia-Predicting\\data\\oasis_longitudinal.csv')
 
     data = fix_missing_data_mean(data)
     data = encode_categorical_data(data)
@@ -167,7 +167,7 @@ def get_data():
     # for x in ['M/F', 'MMSE', 'SES', 'MR Delay', 'ASF']:
     #     data.drop(x, axis=1, inplace=True)
 
-    # heat_map(data)
+    heat_map(data)
 
     # split dataset
     X = data.iloc[:, 1:]
@@ -175,9 +175,9 @@ def get_data():
 
     X = scale_data(X.astype('float'))
 
-    # feature_importance(X, y)
+    feature_importance(X, y)
 
-    # X = pca(X)
+    X = pca(X)
 
     x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
@@ -187,3 +187,6 @@ def get_data():
     np.savetxt("y_test.csv", y_test, delimiter=",", fmt='%i')
 
     return x_train, x_test, y_train, y_test
+
+if __name__ == '__main__':
+    get_data()

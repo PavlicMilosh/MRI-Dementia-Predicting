@@ -3,7 +3,7 @@ import numpy as np
 
 
 class Model:
-    def __init__(self, neurons, links, input_neurons_num=4):
+    def __init__(self, neurons, links, input_neurons_num):
         """
         Constructor.
         :param neurons: array list of neurons
@@ -42,7 +42,7 @@ class Model:
             # add weight to neuron
             if link.to_neuron_id not in self.weights:
                 self.weights[link.to_neuron_id] = []
-            self.weights[link.to_neuron_id].append(link.weight)
+            self.weights[link.to_neuron_id].append(float(link.weight))
             # add input to neuron
             if link.to_neuron_id not in self.connections:
                 self.connections[link.to_neuron_id] = []
@@ -111,7 +111,7 @@ class Model:
         :return:
         """
         for i in range(self.input_neurons_num):
-            if self.neurons[i] == neuron_id:
+            if self.neurons[i].neuron_id == neuron_id:
                 return True
         return False
 
@@ -140,7 +140,7 @@ class Model:
         """
         feed = {}
         for i in range(len(self.inputs)):
-            feed[self.inputs[i + 1]] = data[i]
+            feed[self.inputs[i]] = data[i]
         return feed
 
     def predict(self, X):
