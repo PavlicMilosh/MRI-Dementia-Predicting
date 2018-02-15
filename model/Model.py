@@ -123,11 +123,7 @@ class Model:
         :param y: true categories
         :return:
         """
-        probs = []
-        with tf.Session(graph=self.graph) as sess:
-            sess.run(tf.global_variables_initializer())
-            for x in X:
-                probs.append(sess.run(self.output, feed_dict=self.feed(x)))
+        probs = self.predict(X)
 
         num_examples = X.shape[0]
 
@@ -148,7 +144,17 @@ class Model:
         return feed
 
     def predict(self, X):
-        pass
+        """
+        Predict class for 'X'
+        :param X: array of shape (n, self.input_neurons_num), n > 0; example: [[1,2,3]]; [[1,2,3],[1,2,3]]
+        :return:
+        """
+        probs = []
+        with tf.Session(graph=self.graph) as sess:
+            sess.run(tf.global_variables_initializer())
+            for x in X:
+                probs.append(sess.run(self.output, feed_dict=self.feed(x)))
+        return probs
 
     @staticmethod
     def save_graph(graph):
