@@ -181,8 +181,8 @@ class Model:
             save_path = saver.save(sess, os.path.join(MODELS_PATH, "model"))
             print("Model saved in path: %s" % save_path)
 
-            with open("models/.model.inputs", "w") as file:
+            with open(os.path.join(MODELS_PATH, ".model.inputs"), "w") as file:
                 for v in self.inputs.values():
                     file.write(v.name + "\n")
-            with open("models/.model.output", "w") as file:
+            with open(os.path.join(MODELS_PATH, ".model.output"), "w") as file:
                 file.write(self.output.name)
