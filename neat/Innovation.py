@@ -9,12 +9,12 @@ class Innovation:
     """
 
     def __init__(self,
-                 innovation_id: int,
-                 innovation_type: InnovationType,
-                 neuron_in_id: int,
-                 neuron_out_id: int,
-                 neuron_id: int,
-                 neuron_type: NeuronType):
+                 innovation_id: int                 = 0,
+                 innovation_type: InnovationType    = None,
+                 neuron_in_id: int                  = 0,
+                 neuron_out_id: int                 = 0,
+                 neuron_id: int                     = 0,
+                 neuron_type: NeuronType            = None):
 
         self.innovation_id = innovation_id
         self.innovation_type = innovation_type

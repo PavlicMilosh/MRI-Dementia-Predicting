@@ -20,14 +20,14 @@ class Ga(object):
                  population_size: int,
                  inputs: int,
                  outputs: int,
-                 generation: int = 0,
-                 innovation_db: InnovationDB = None,
-                 next_genome_id: int = 0,
-                 next_species_id: int = 0,
-                 fittest_genome: Genome = None,
-                 best_ever_fitness: float = 0,
-                 total_fitness_adj: float = 0,
-                 avg_fitness_adj: float = 0):
+                 generation: int                = 0,
+                 innovation_db: InnovationDB    = None,
+                 next_genome_id: int            = 0,
+                 next_species_id: int           = 0,
+                 fittest_genome: Genome         = None,
+                 best_ever_fitness: float       = 0,
+                 total_fitness_adj: float       = 0,
+                 avg_fitness_adj: float         = 0):
 
         self.inputs = inputs
         self.outputs = outputs
