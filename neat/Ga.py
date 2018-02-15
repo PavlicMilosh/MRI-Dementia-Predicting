@@ -1,4 +1,4 @@
-from random import random, randint
+from random import random, randint, randrange, uniform
 from typing import List
 
 from neat import Constants
@@ -21,7 +21,6 @@ class Ga(object):
                  inputs: int,
                  outputs: int,
                  generation: int                = 0,
-                 innovation_db: InnovationDB    = None,
                  next_genome_id: int            = 0,
                  next_species_id: int           = 0,
                  fittest_genome: Genome         = None,
@@ -31,7 +30,6 @@ class Ga(object):
 
         self.inputs = inputs
         self.outputs = outputs
-        self.innovation_db = innovation_db
 
         # current generation
         self.generation = generation
@@ -56,7 +54,7 @@ class Ga(object):
             self.genomes.append(Genome.from_inputs_outputs(next_genome_id, inputs, outputs))
 
         genome = Genome.from_inputs_outputs(1, inputs, outputs)
-        self.innovationDB = InnovationDB.from_genes(genome.links, genome.neurons)
+        self.innovation_db = InnovationDB.from_genes(genome.links, genome.neurons)
 
 
     def crossover(self, mother: Genome, father: Genome) -> Genome:
@@ -71,23 +69,23 @@ class Ga(object):
         best_parent = None
 
         # choose the best parent
-        if mother.fitness() == father.fitness():
+        if mother.fitness == father.fitness:
             if mother.num_links() == father.num_links():
-                best_parent = ParentType.MOTHER if random.uniform(0, 1) > 0.5 else ParentType.FATHER
+                best_parent = ParentType.MOTHER if uniform(0, 1) > 0.5 else ParentType.FATHER
             else:
                 best_parent = ParentType.MOTHER if mother.num_links() < father.num_links() else ParentType.FATHER
         else:
-            best_parent = ParentType.MOTHER if mother.fitness() > father.fitness() else ParentType.FATHER
+            best_parent = ParentType.MOTHER if mother.fitness > father.fitness else ParentType.FATHER
 
         baby_neurons = []
         baby_links = []
         neuron_ids = []
 
-        mother_it = iter(mother.start_of_links())
-        father_it = iter(father.start_of_links())
+        mother_it = mother.start_of_links()
+        father_it = father.start_of_links()
 
-        cur_mother = LinkGene.constructor()
-        cur_father = LinkGene.constructor()
+        cur_mother = next(mother_it)
+        cur_father = next(father_it)
 
         selected_link = None
 
@@ -121,7 +119,7 @@ class Ga(object):
 
             # if innovations are same
             elif cur_mother.innovation_id == cur_father.innovation_id:
-                selected_link = cur_mother if random.uniform(0, 1) > 0.5 else cur_father
+                selected_link = cur_mother if uniform(0, 1) > 0.5 else cur_father
                 cur_father = next(father_it, None)
                 cur_mother = next(mother_it, None)
 
@@ -238,7 +236,7 @@ class Ga(object):
                         else:
                             g1 = self.species[spc].spawn()
 
-                            if random.randrange(0, 1) < crossover_rate:
+                            if randrange(0, 1) < crossover_rate:
                                 g2 = self.species[spc].spawn()
 
                                 attempts = 5
@@ -259,14 +257,16 @@ class Ga(object):
                         if baby.num_neurons() < max_permitted_neurons:
                             baby.add_neuron(chance_to_add_neuron, self.innovation_db, num_tries_to_find_old_link)
 
-                        baby.add_link(chance_to_add_link, chance_to_add_recurrent_link, self.innovation_db,
+                        baby.add_link(chance_to_add_link,
+                                      chance_to_add_recurrent_link,
+                                      self.innovation_db,
                                       num_tries_to_find_loop, num_tries_to_add_link)
 
                         baby.mutate_weights(mutation_rate, probability_of_weight_replacement, max_weight_perturbation)
 
                         baby.mutate_activation_response(activation_mutation_rate, max_activation_perturbation)
 
-                    # baby.sort_genes()
+                    baby.sort_link()
 
                     new_population.append(baby)
 
@@ -286,7 +286,7 @@ class Ga(object):
         new_phenotypes = []
 
         for genotype in self.genomes:
-            self.calculate_net_depth(self.genomes[genotype])
+            self.calculate_net_depth(genotype)
             phenotype = genotype.create_phenotype()
             new_phenotypes.append(phenotype)
 

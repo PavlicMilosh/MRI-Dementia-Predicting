@@ -1,6 +1,6 @@
 import random
 from typing import List
-
+from math import ceil
 from neat.Constants import young_age_threshold, young_fitness_bonus, old_age_threshold, old_age_penalty, survival_rate
 from neat.Genome import Genome
 
@@ -117,7 +117,7 @@ class Species:
             baby = self.members[0]
 
         else:
-            index = random.randint(0, (survival_rate * len(self.members)) + 1)
+            index = random.randint(0, ceil((survival_rate * len(self.members)) + 1))
             baby = self.members[index]
 
         return baby

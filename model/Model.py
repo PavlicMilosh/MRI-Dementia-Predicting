@@ -74,6 +74,7 @@ class Model:
                     if self.is_input_neuron(input_neuron_id):
                         vertex = self.inputs[input_neuron_id]
                     else:
+                        # TODO: Ovde puca sada, ne postoji key sa tim neuronom
                         vertex = operations[input_neuron_id]
 
                     v_inputs.append(vertex)

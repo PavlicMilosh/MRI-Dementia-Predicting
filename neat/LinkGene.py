@@ -20,13 +20,13 @@ class LinkGene:
 
 
     @classmethod
-    def constructor(cls,
-                    neuron_in_id: int,
-                    neuron_out_id: int,
-                    enabled: bool,
-                    innovation_id: int,
-                    weight: float,
-                    recurrent: bool) -> 'LinkGene':
+    def constructor1(cls,
+                     neuron_in_id: int,
+                     neuron_out_id: int,
+                     enabled: bool,
+                     innovation_id: int,
+                     weight: float,
+                     recurrent: bool = False) -> 'LinkGene':
         ret = cls()
         ret.from_neuron_id = neuron_in_id
         ret.to_neuron_id = neuron_out_id
@@ -38,7 +38,7 @@ class LinkGene:
 
 
     @classmethod
-    def constructor(cls) -> 'LinkGene':
+    def constructor2(cls) -> 'LinkGene':
         return cls()
 
 
