@@ -21,19 +21,19 @@ class Genome(object):
     # ==================================================================================================================
 
     def __init__(self,
-                 genome_id: int,
-                 neurons: List[NeuronGene],
-                 links: List[LinkGene],
-                 phenotype,
-                 fitness: float,
-                 adjusted_fitness: float,
-                 amount_to_spawn: int,
-                 num_inputs: int,
-                 num_outputs: int,
-                 species: int,
-                 inputs: int,
-                 outputs: int,
-                 depth: int):
+                 genome_id: int = 0,
+                 neurons: List[NeuronGene] = [],
+                 links: List[LinkGene] = [],
+                 phenotype = None,
+                 fitness: float = 0,
+                 adjusted_fitness: float = 0,
+                 amount_to_spawn: int = 0,
+                 num_inputs: int = 0,
+                 num_outputs: int = 0,
+                 species: int = 0,
+                 inputs: int = 0,
+                 outputs: int = 0,
+                 depth: int = 0):
 
         self.genome_id = genome_id
         self.neurons = neurons

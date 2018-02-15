@@ -15,13 +15,13 @@ class Species:
     # ==================================================================================================================
 
     def __init__(self,
-                 members: List[Genome],
-                 leader: Genome,
-                 species_id: int,
-                 best_fitness: float,
-                 gens_no_improvement: int,
-                 age: int,
-                 spawns_required: float):
+                 members: List[Genome] = [],
+                 leader: Genome = None,
+                 species_id: int = 0,
+                 best_fitness: float = 0,
+                 gens_no_improvement: int = 0,
+                 age: int = 0,
+                 spawns_required: float = 0):
 
         self.members = members
         self.leader = leader

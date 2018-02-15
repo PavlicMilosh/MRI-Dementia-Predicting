@@ -7,12 +7,12 @@ class NeuronGene:
     """
 
     def __init__(self,
-                 neuron_id: int,
-                 neuron_type: NeuronType,
-                 recurrent: bool,
-                 activation_response: float,
-                 split_x: int,
-                 split_y: int):
+                 neuron_id: int = 0,
+                 neuron_type: NeuronType = None,
+                 recurrent: bool = False,
+                 activation_response: float = 0,
+                 split_x: int = 0,
+                 split_y: int = 0):
 
         self.neuron_id = neuron_id
         self.neuron_type = neuron_type

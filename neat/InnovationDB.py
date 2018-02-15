@@ -12,9 +12,9 @@ class InnovationDB:
     """
 
     def __init__(self,
-                 innovations,
-                 next_neuron_id: int,
-                 next_innovation_num: int):
+                 innovations = [],
+                 next_neuron_id: int = 0,
+                 next_innovation_num: int = 0):
 
         self.innovations = innovations
         self.next_neuron_id = next_neuron_id
