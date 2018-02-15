@@ -34,6 +34,7 @@ class Innovation:
         ret.innovation_id = innovation_id
         ret.neuron_id = neuron_id
         ret.neuron_type = neuron.neuron_type
+        ret.innovation_type = InnovationType.NEW_NEURON
         ret.neuron_in = -1
         ret.neuron_out = -1
         return ret
@@ -62,8 +63,7 @@ class Innovation:
               innovation_type: InnovationType,
               innovation_id: int,
               neuron_type: NeuronType,
-              x,
-              y) -> 'Innovation':
+              ) -> 'Innovation':
 
         ret = cls()
         ret.neuron_in = neuron_in_id

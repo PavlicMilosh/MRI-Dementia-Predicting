@@ -112,7 +112,7 @@ class InnovationDB:
         """
 
         innovation = Innovation.init3(neuron_in_id, neuron_out_id, innovation_type, self.next_innovation_num,
-                                      neuron_type, x, y)
+                                      neuron_type)
 
         if innovation_type == InnovationType.NEW_NEURON:
             innovation.neuron_id = self.next_neuron_id
@@ -124,7 +124,7 @@ class InnovationDB:
         return self.next_neuron_id - 1
 
 
-    # TODO: Check this??
+    # TODO: Check this?? dis checked, dis OK
     def create_neuron_from_id(self, neuron_id) -> NeuronGene:
         """
         Creates neuron with given id. If neuron already exists in
@@ -135,8 +135,8 @@ class InnovationDB:
         :return:            NeuronGene
         """
         tmp = NeuronGene.constructor3(neuron_id)
-
         for innovation in self.innovations:
+            # print(innovation.neuron_type)
             if innovation.neuron_id == neuron_id:
                 tmp.neuron_type = innovation.neuron_type
                 tmp.neuron_id = neuron_id

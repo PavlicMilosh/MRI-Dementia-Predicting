@@ -24,12 +24,12 @@ class NeuronGene:
 
     @classmethod
     def constructor1(cls,
-                    neuron_type: NeuronType,
-                    neuron_id: int,
-                    split_x: float,
-                    split_y: float,
-                    recurrent: bool = False,
-                    activation: float = 1):
+                     neuron_type: NeuronType,
+                     neuron_id: int,
+                     split_x: float,
+                     split_y: float,
+                     recurrent: bool = False,
+                     activation: float = 1):
         ret = cls()
         ret.neuron_type = neuron_type
         ret.neuron_id = neuron_id
