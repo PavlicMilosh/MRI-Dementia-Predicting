@@ -2,7 +2,8 @@ import tensorflow as tf
 import numpy as np
 import os
 
-MODELS_PATH = "./../graph"
+MODELS_PATH = "./../graph/models"
+LOG_PATH = "./../graph/log"
 
 
 class Model:
@@ -166,7 +167,7 @@ class Model:
         When file is saved, in a new terminal, launch TensorBoard with the following shell command:
             tensorboard --logdir .
         """
-        writer = tf.summary.FileWriter('./../graph/log')
+        writer = tf.summary.FileWriter(LOG_PATH)
         writer.add_graph(self.graph)
 
     def save_graph(self):

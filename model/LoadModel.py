@@ -10,7 +10,7 @@ class LoadModel:
         prediction = model.predict([[1, 2, 3]])
     """
 
-    def __init__(self, path="models"):
+    def __init__(self, path="./../graph/models"):
         self._models_path = path
         self._graph = None
         self._inputs = {}
