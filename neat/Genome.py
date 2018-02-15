@@ -2,14 +2,19 @@ import random
 from math import sqrt
 from typing import List
 
+from data_preprocessing.preprocess_data import get_training_data, get_test_data
 from neat.InnovationDB import InnovationDB
 from neat.InovationType import InnovationType
 from neat.LinkGene import LinkGene
 from neat.NeuronGene import NeuronGene
 from neat.NeuronType import NeuronType
+from model import Model
 
 
 class Genome(object):
+    """
+    Class represents genotype.
+    """
 
     # ==================================================================================================================
     # CONSTRUCTORS
@@ -33,6 +38,7 @@ class Genome(object):
         self.genome_id = genome_id
         self.neurons = neurons
         self.links = links
+        self.model = None
         self.phenotype = phenotype
         self.fitness = fitness
         self.adjusted_fitness = adjusted_fitness
@@ -44,7 +50,6 @@ class Genome(object):
         self.outputs = outputs
         self.depth = depth
 
-
     @classmethod
     def from_neurons_and_links(cls,
                                genome_id: int,
@@ -52,6 +57,17 @@ class Genome(object):
                                links: List[LinkGene],
                                inputs: int,
                                outputs: int) -> 'Genome':
+        """
+        Creates object of class Genome from list of neuron and
+        link genes and number of inputs and outputs.
+
+        :param genome_id:   int                 - id
+        :param neurons:     List[NeuronGene]    - neurons
+        :param links:       List[LinkGene]      - links
+        :param inputs:      int                 - number of inputs
+        :param outputs:     int                 - number of outputs
+        :return: ret        Genome
+        """
         ret = cls()
         ret.genome_id = genome_id
         ret.phenotype = None
@@ -64,9 +80,16 @@ class Genome(object):
         ret.outputs = outputs
         return ret
 
-
     @classmethod
     def from_inputs_outputs(cls, genome_id: int, inputs: int, outputs: int):
+        """
+        Creates object of class Genome from number of inputs and outputs.
+
+        :param genome_id: int       - id
+        :param inputs:    int       - number of inputs
+        :param outputs:   int       - number of outputs
+        :return:          Genome
+        """
 
         ret = cls()
         ret.genome_id = genome_id
@@ -85,6 +108,9 @@ class Genome(object):
 
         return ret
 
+    # ==================================================================================================================
+    # MUTATIONS
+    # ==================================================================================================================
 
     @classmethod
     def from_links_neurons(cls,
@@ -101,37 +127,30 @@ class Genome(object):
         return ret
 
 
-    def duplicate_link(self, neuron_in_id: int, neuron_out_id: int):
-        for l in self.links:
-            if l.from_neuron_id == neuron_in_id and l.to_neuron_id == neuron_out_id:
-                return True
-        return False
-
-
-    def already_have_this_neuron_id(self, neuron_id: int):
-        for n in self.neurons:
-            if n.neuron_id == neuron_id:
-                return True
-        return False
-
-
     # given a neuron id this function just finds its position in
     # m_vecNeurons
     def get_element_pos(self, neuron_id: int) -> int:
         pass
 
 
-    def create_phenotype(self):
-        pass
+    def add_link(self,
+                 mutation_rate: float,
+                 chance_of_looped: float,
+                 innovation_db: InnovationDB,
+                 num_tries_to_find_loop: int,
+                 num_tries_to_add_link: int):
+        """
+        Tries to add a new link mutation to genotype.
+        If mutation doesn't exist in the database of
+        innovations, adds mutation as innovation, else
+        gets existing innovation.
 
-    def delete_phenotype(self):
-        self.phenotype = None
-
-
-    '''Tries to do a new link mutation'''
-    def add_link(self, mutation_rate: float, chance_of_looped: float, innovation_db: InnovationDB,
-                 num_tries_to_find_loop: int, num_tries_to_add_link: int):
-
+        :param mutation_rate:           float
+        :param chance_of_looped:        float
+        :param innovation_db:           InnovationDB
+        :param num_tries_to_find_loop:  int
+        :param num_tries_to_add_link:   int
+        """
         if random.uniform(0, 1) > mutation_rate:
             return
 
@@ -183,9 +202,20 @@ class Genome(object):
             gene = LinkGene.constructor(neuron1_id, neuron2_id, True, innovation_id, random.uniform(-1, 1), recurrent)
             self.links.append(gene)
 
-
-    '''Tries to do a new neuron mutation'''
     def add_neuron(self, mutation_rate: float, innovation_db: InnovationDB, num_tries_to_find_old_link: int):
+
+        """
+        Tries to add a new neuron mutation to genotype.
+        If mutation doesn't exist in the database of
+        innovations, adds mutation as innovation, else
+        gets existing innovation.
+
+
+        :param mutation_rate:               float
+        :param innovation_db:               InnovationDB
+        :param num_tries_to_find_old_link:  int
+        :return:
+        """
 
         if random.uniform(0, 1) > mutation_rate:
             return
@@ -275,12 +305,17 @@ class Genome(object):
             new_neuron = NeuronGene.constructor(NeuronType.HIDDEN, new_neuron_id, new_depth, new_width)
             self.neurons.append(new_neuron)
 
-
     def mutate_weights(self,
                        mutation_rate: float,
                        new_mutation_probability: float,
                        max_perturbation: float):
+        """
+        Tries to mutate weights of links.
 
+        :param mutation_rate:               float
+        :param new_mutation_probability:    float
+        :param max_perturbation:            float
+        """
         for idx, val in enumerate(self.links):
             if random.uniform(0, 1) < mutation_rate:
                 if random.uniform(0, 1) < new_mutation_probability:
@@ -288,22 +323,61 @@ class Genome(object):
                 else:
                     self.links[idx].weight = random.uniform(-1, 1) * max_perturbation
 
-
     def mutate_activation_response(self,
                                    mutation_rate: float,
                                    max_perturbation: float):
+        """
+        Tries to mutate neuron activation function.
+
+        :param mutation_rate:       float
+        :param max_perturbation:    float
+        """
         for idx, val in enumerate(self.neurons):
             if random.uniform(0, 1) < mutation_rate:
                 self.neurons[idx].activation_response += random.uniform(-1, 1) * max_perturbation
 
+    # ==================================================================================================================
+    # PHENOTYPE
+    # ==================================================================================================================
 
-    def __lt__(self, other):
-        return self.fitness < other.fitness
+    def create_phenotype(self):
+        self.model = Model.Model(self.neurons, self.links)
+        self.model.build()
+        return self.model
 
+    def delete_phenotype(self):
+        self.phenotype = None
 
-    def fitness(self):
-        pass
+    # ==================================================================================================================
+    # HELPER METHODS
+    # ==================================================================================================================
 
+    def duplicate_link(self, neuron_in_id: int, neuron_out_id: int) -> bool:
+        """
+        Checks if link between given neurons (represented through id)
+        already exists.
+
+        :param neuron_in_id:    int
+        :param neuron_out_id:   int
+        :return:                bool    - returns True if exists, else False
+        """
+        for l in self.links:
+            if l.from_neuron_id == neuron_in_id and l.to_neuron_id == neuron_out_id:
+                return True
+        return False
+
+    def already_have_this_neuron_id(self, neuron_id: int) -> bool:
+        """
+        Checks if genome already contains neuron represented with
+        given id.
+
+        :param neuron_id:    int
+        :return:             bool    - returns True if contains, else False
+        """
+        for n in self.neurons:
+            if n.neuron_id == neuron_id:
+                return True
+        return False
 
     # ==================================================================================================================
     # ACCESSOR METHODS
@@ -320,3 +394,20 @@ class Genome(object):
 
     def split_y(self, index):
         return self.neurons[index].split_y
+
+    def split_x(self, index):
+        return self.neurons[index].split_x
+
+    def get_fitness(self):
+        X, y = get_training_data()
+        if self.model is None:
+            raise AttributeError("Error. Phenotype is not created")
+        else:
+            return self.model.calculate_loss(X, y)
+
+    # ==================================================================================================================
+    # OPERATOR OVERLOAD
+    # ==================================================================================================================
+
+    def __lt__(self, other):
+        return self.fitness < other.fitness
