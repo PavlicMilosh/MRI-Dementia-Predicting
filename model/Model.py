@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 import os
 
-MODELS_PATH = "models"
+MODELS_PATH = "./../graph"
 
 
 class Model:
@@ -98,7 +98,7 @@ class Model:
     def build(self):
         self.build_model()
         self.build_graph()
-        self.save_graph_summary(self.graph)
+        self.save_graph_summary()
 
     def is_output_neuron(self, neuron_id):
         """

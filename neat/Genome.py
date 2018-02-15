@@ -107,7 +107,7 @@ class Genome(object):
             for j in range(inputs):
                 ret.links.append(LinkGene(ret.neurons[j].neuron_id,
                                           ret.neurons[i + inputs].neuron_id,
-                                          1, True, False, 0))
+                                          1.0, True, False, 0))
 
         return ret
 
