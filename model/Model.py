@@ -157,7 +157,7 @@ class Model:
         return probs
 
     @staticmethod
-    def save_graph(graph):
+    def save_graph_summary(graph):
         """
         Save the computation graph to a TensorBoard summary file.
         When file is saved, in a new terminal, launch TensorBoard with the following shell command:
@@ -165,3 +165,12 @@ class Model:
         """
         writer = tf.summary.FileWriter('.')
         writer.add_graph(graph)
+
+    @staticmethod
+    def save_graph(graph):
+        """
+        Save graph to file, so later can be loaded.
+        :param graph:
+        :return:
+        """
+        pass
