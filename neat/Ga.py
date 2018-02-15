@@ -222,7 +222,7 @@ class Ga(object):
 
         for spc in range(len(self.species)):
             if spawned_so_far < population_size:
-                num_to_spawn = round(self.species[spc].spawns_required)
+                num_to_spawn = int(round(self.species[spc].spawns_required))
                 chosen_best_yet = False
 
                 for i in range(num_to_spawn):
@@ -266,7 +266,7 @@ class Ga(object):
 
                         baby.mutate_activation_response(activation_mutation_rate, max_activation_perturbation)
 
-                    baby.sort_genes()
+                    # baby.sort_genes()
 
                     new_population.append(baby)
 

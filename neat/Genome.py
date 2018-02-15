@@ -3,6 +3,7 @@ from math import sqrt
 from typing import List
 
 from data_preprocessing.preprocess_data import get_training_data, get_test_data
+from neat.Constants import excess_multiplier, disjoint_multiplier, matched_multiplier
 from neat.InnovationDB import InnovationDB
 from neat.InovationType import InnovationType
 from neat.LinkGene import LinkGene
@@ -406,6 +407,50 @@ class Genome(object):
             raise AttributeError("Error. Phenotype is not created")
         else:
             return self.model.calculate_loss(X, y)
+
+    def get_compatibility_score(self, other: 'Genome'):
+        disjoint = 0
+        excess = 0
+        matched = 0
+        weight_difference = 0
+
+        i1 = 0
+        i2 = 0
+
+        while(i1 < len(self.links) - 1) or (i2 < len(other.links) - 1):
+            if i1 == len(self.links) - 1:
+                i2 += 1
+                excess += 1
+                continue
+
+            if i2 == len(other.links) - 1:
+                i1 += 1
+                excess += 1
+                continue
+
+            link1 = self.links[i1]
+            link2 = self.links[i2]
+
+            if link1.innovation_id == link2.innovation_id:
+                i1 += 1
+                i2 += 1
+                matched += 1
+
+                weight_difference = abs(link1.weight - link2.weight)
+
+            if link1 < link2:
+                disjoint += 1
+                i1 += 1
+
+            if link2 < link1:
+                disjoint += 1
+                i2 += 1
+
+            longest = max(self.num_links(), other.num_links())
+
+            return (excess_multiplier * excess / float(longest)) +\
+                   (disjoint_multiplier * disjoint / float(longest)) +\
+                   (matched_multiplier * weight_difference / matched)
 
     # ==================================================================================================================
     # OPERATOR OVERLOAD

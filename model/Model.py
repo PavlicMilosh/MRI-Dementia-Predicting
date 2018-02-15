@@ -102,7 +102,7 @@ class Model:
         :param neuron_id:
         :return:
         """
-        return self.neurons[self.input_neurons_num] == neuron_id
+        return self.neurons[self.input_neurons_num].neuron_id == neuron_id
 
     def is_input_neuron(self, neuron_id):
         """

@@ -23,3 +23,8 @@ compatibility_threshold = 0.26
 max_number_of_species = 10
 epsilon = 0.95
 max_generation = 500
+
+# score multipliers for speciation
+disjoint_multiplier = 1
+excess_multiplier = 1
+matched_multiplier = 0.4
