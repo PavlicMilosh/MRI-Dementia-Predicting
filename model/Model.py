@@ -98,6 +98,7 @@ class Model:
     def build(self):
         self.build_model()
         self.build_graph()
+        self.save_graph_summary(self.graph)
 
     def is_output_neuron(self, neuron_id):
         """
@@ -165,7 +166,7 @@ class Model:
         When file is saved, in a new terminal, launch TensorBoard with the following shell command:
             tensorboard --logdir .
         """
-        writer = tf.summary.FileWriter('.')
+        writer = tf.summary.FileWriter('./../graph/log')
         writer.add_graph(self.graph)
 
     def save_graph(self):

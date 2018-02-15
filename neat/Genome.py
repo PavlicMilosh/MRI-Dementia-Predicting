@@ -1,8 +1,9 @@
-import random
+from random import uniform, randrange, randint
 from math import sqrt
 from typing import List
 
 from data_preprocessing.preprocess_data import get_training_data, get_test_data
+from neat.Constants import excess_multiplier, disjoint_multiplier, matched_multiplier
 from neat.InnovationDB import InnovationDB
 from neat.InovationType import InnovationType
 from neat.LinkGene import LinkGene
@@ -129,10 +130,17 @@ class Genome(object):
         return ret
 
 
-    # given a neuron id this function just finds its position in
-    # m_vecNeurons
     def get_element_pos(self, neuron_id: int) -> int:
-        pass
+        """
+        Finds position (indx) of neuron by given neuron id.
+
+        :param neuron_id: int   - id of neuron
+        :return:          int   - position if found, -1 if not
+        """
+        for i in range(len(self.neurons)):
+            if self.neurons[i].neuron_id == neuron_id:
+                return i
+        return -1
 
 
     def add_link(self,
@@ -153,7 +161,7 @@ class Genome(object):
         :param num_tries_to_find_loop:  int
         :param num_tries_to_add_link:   int
         """
-        if random.uniform(0, 1) > mutation_rate:
+        if uniform(0, 1) > mutation_rate:
             return
 
         neuron1_id = -1
@@ -161,10 +169,18 @@ class Genome(object):
 
         recurrent = False
 
-        if random.uniform(0, 1) > chance_of_looped:
+        if uniform(0, 1) < chance_of_looped:
             for i in range(num_tries_to_find_loop):
-                neuron_pos = random.randint(self.inputs + 1, len(self.neurons) - 1)
-                if not self.neurons[neuron_pos].recurrent and self.neurons[neuron_pos].neuron_type != NeuronType.BIAS \
+
+                # TODO: Check if this is legit
+                # Imamo u nasem slucaju 4 input neurona, a pozicija nam treba
+                # kao indeks. Zasto onda stavljamo da trazi random int od 5?
+                # Indeksi nam idu 0, 1, 2, 3, treba da nadjemo sl neuron koji nije input
+                # valjda je ovo svrha ovog dela...
+                neuron_pos = randint(self.inputs, len(self.neurons) - 1)
+
+                if not self.neurons[neuron_pos].recurrent \
+                        and self.neurons[neuron_pos].neuron_type != NeuronType.BIAS \
                         and self.neurons[neuron_pos].neuron_type != NeuronType.INPUT:
                     neuron1_id = neuron2_id = self.neurons[neuron_pos].neuron_id
                     self.neurons[neuron_pos].recurrent = True
@@ -174,8 +190,10 @@ class Genome(object):
 
         else:
             for i in range(num_tries_to_add_link):
-                neuron1_id = self.neurons[random.randint(0, len(self.neurons) - 1)].neuron_id
-                neuron2_id = self.neurons[random.randint(self.inputs + 1, len(self.neurons) - 1)].neuron_id
+                neuron1_id = self.neurons[randint(0, len(self.neurons) - 1)].neuron_id
+
+                # TODO: Ovde isto... zasto +1 na self.inputs
+                neuron2_id = self.neurons[randint(self.inputs, len(self.neurons) - 1)].neuron_id
                 # second neuron must not be input or bias
                 if self.neurons[self.get_element_pos(neuron2_id)].neuron_type != NeuronType.INPUT \
                         and self.neurons[self.get_element_pos(neuron2_id)].neuron_type != NeuronType.BIAS:
@@ -198,11 +216,12 @@ class Genome(object):
         if innovation_id < 0:
             innovation_db.create_link_innovation(neuron1_id, neuron2_id, InnovationType.NEW_LINK)
             innovation_id = innovation_db.next_number() - 1
-            gene = LinkGene.constructor(neuron1_id, neuron2_id, True, innovation_id, random.uniform(-1, 1), recurrent)
+            gene = LinkGene.constructor1(neuron1_id, neuron2_id, True, innovation_id, uniform(-1, 1), recurrent)
             self.links.append(gene)
         else:
-            gene = LinkGene.constructor(neuron1_id, neuron2_id, True, innovation_id, random.uniform(-1, 1), recurrent)
+            gene = LinkGene.constructor1(neuron1_id, neuron2_id, True, innovation_id, uniform(-1, 1), recurrent)
             self.links.append(gene)
+
 
     def add_neuron(self, mutation_rate: float, innovation_db: InnovationDB, num_tries_to_find_old_link: int):
 
@@ -219,7 +238,7 @@ class Genome(object):
         :return:
         """
 
-        if random.uniform(0, 1) > mutation_rate:
+        if uniform(0, 1) > mutation_rate:
             return
 
         old_link_found = False
@@ -229,7 +248,7 @@ class Genome(object):
 
         if len(self.links) > size_threshold:
             for i in range(num_tries_to_find_old_link):
-                chosen_link_index = random.randint(0, len(self.links) - 1 - int(sqrt(len(self.links))))
+                chosen_link_index = randint(0, len(self.links) - 1 - int(sqrt(len(self.links))))
 
                 from_neuron = self.links[chosen_link_index].from_neuron_id
 
@@ -243,11 +262,12 @@ class Genome(object):
 
         else:
             while not old_link_found:
-                chosen_link_index = random.randint(0, len(self.links) - 1)
+                chosen_link_index = randint(0, len(self.links) - 1)
 
                 from_neuron = self.links[chosen_link_index].from_neuron_id
 
-                if self.links[chosen_link_index].enabled and not self.links[chosen_link_index].recurrent \
+                if self.links[chosen_link_index].enabled \
+                        and not self.links[chosen_link_index].recurrent \
                         and self.neurons[self.get_element_pos(from_neuron)].neuron_type != NeuronType.BIAS:
                     old_link_found = True
 
@@ -275,18 +295,18 @@ class Genome(object):
                                                                    InnovationType.NEW_NEURON, NeuronType.HIDDEN,
                                                                    new_width, new_depth)
 
-            self.neurons.append(NeuronGene.constructor(NeuronType.HIDDEN, new_neuron_id, new_depth, new_width))
+            self.neurons.append(NeuronGene.constructor1(NeuronType.HIDDEN, new_neuron_id, new_depth, new_width))
 
             link1_id = innovation_db.next_number()
             innovation_db.create_link_innovation(from_neuron, new_neuron_id, InnovationType.NEW_LINK)
 
-            link1 = LinkGene.constructor(from_neuron, new_neuron_id, True, link1_id, 1., False)
+            link1 = LinkGene.constructor1(from_neuron, new_neuron_id, True, link1_id, 1., False)
             self.links.append(link1)
 
             link2_id = innovation_db.next_number()
             innovation_db.create_link_innovation(new_neuron_id, to_neuron, InnovationType.NEW_LINK)
 
-            link2 = LinkGene.constructor(new_neuron_id, from_neuron, True, link2_id, original_weight, False)
+            link2 = LinkGene.constructor1(new_neuron_id, from_neuron, True, link2_id, original_weight)
             self.links.append(link2)
 
         else:
@@ -298,14 +318,13 @@ class Genome(object):
             if (link1_id < 0) or (link2_id < 0):
                 return
 
-            link1 = LinkGene.constructor(from_neuron, new_neuron_id, True, link1_id, 1., False)
-            link2 = LinkGene.constructor(new_neuron_id, to_neuron, True, link2_id, original_weight, False)
+            link1 = LinkGene.constructor1(from_neuron, new_neuron_id, True, link1_id, 1., False)
+            link2 = LinkGene.constructor1(new_neuron_id, to_neuron, True, link2_id, original_weight, False)
 
             self.links.append(link1)
             self.links.append(link2)
 
-            new_neuron = NeuronGene.constructor(NeuronType.HIDDEN, new_neuron_id, new_depth, new_width)
-            self.neurons.append(new_neuron)
+            self.neurons.append(NeuronGene.constructor1(NeuronType.HIDDEN, new_neuron_id, new_depth, new_width))
 
     def mutate_weights(self,
                        mutation_rate: float,
@@ -319,11 +338,11 @@ class Genome(object):
         :param max_perturbation:            float
         """
         for idx, val in enumerate(self.links):
-            if random.uniform(0, 1) < mutation_rate:
-                if random.uniform(0, 1) < new_mutation_probability:
-                    self.links[idx].weight = random.uniform(-1, 1)
+            if uniform(0, 1) < mutation_rate:
+                if uniform(0, 1) < new_mutation_probability:
+                    self.links[idx].weight = uniform(-1, 1)
                 else:
-                    self.links[idx].weight = random.uniform(-1, 1) * max_perturbation
+                    self.links[idx].weight = uniform(-1, 1) * max_perturbation
 
     def mutate_activation_response(self,
                                    mutation_rate: float,
@@ -335,8 +354,8 @@ class Genome(object):
         :param max_perturbation:    float
         """
         for idx, val in enumerate(self.neurons):
-            if random.uniform(0, 1) < mutation_rate:
-                self.neurons[idx].activation_response += random.uniform(-1, 1) * max_perturbation
+            if uniform(0, 1) < mutation_rate:
+                self.neurons[idx].activation_response += uniform(-1, 1) * max_perturbation
 
     # ==================================================================================================================
     # PHENOTYPE
@@ -368,6 +387,7 @@ class Genome(object):
                 return True
         return False
 
+
     def already_have_this_neuron_id(self, neuron_id: int) -> bool:
         """
         Checks if genome already contains neuron represented with
@@ -381,6 +401,13 @@ class Genome(object):
                 return True
         return False
 
+
+    def sort_link(self):
+        """
+        Sorts genome links by innovation_id.
+        """
+        self.links.sort()
+
     # ==================================================================================================================
     # ACCESSOR METHODS
     # ==================================================================================================================
@@ -388,17 +415,22 @@ class Genome(object):
     def num_links(self):
         return len(self.links)
 
+
     def num_neurons(self):
         return len(self.neurons)
 
+
     def start_of_links(self):
-        return next(iter(self.links))
+        return iter(self.links)
+
 
     def split_y(self, index):
         return self.neurons[index].split_y
 
+
     def split_x(self, index):
         return self.neurons[index].split_x
+
 
     def get_fitness(self):
         X, y = get_training_data()
@@ -406,6 +438,54 @@ class Genome(object):
             raise AttributeError("Error. Phenotype is not created")
         else:
             return self.model.calculate_loss(X, y)
+
+    # ==================================================================================================================
+    # SCORE
+    # ==================================================================================================================
+
+    def get_compatibility_score(self, other: 'Genome'):
+        disjoint = 0
+        excess = 0
+        matched = 0
+        weight_difference = 0
+
+        i1 = 0
+        i2 = 0
+
+        while(i1 < len(self.links) - 1) or (i2 < len(other.links) - 1):
+            if i1 == len(self.links) - 1:
+                i2 += 1
+                excess += 1
+                continue
+
+            if i2 == len(other.links) - 1:
+                i1 += 1
+                excess += 1
+                continue
+
+            link1 = self.links[i1]
+            link2 = self.links[i2]
+
+            if link1.innovation_id == link2.innovation_id:
+                i1 += 1
+                i2 += 1
+                matched += 1
+
+                weight_difference = abs(link1.weight - link2.weight)
+
+            if link1 < link2:
+                disjoint += 1
+                i1 += 1
+
+            if link2 < link1:
+                disjoint += 1
+                i2 += 1
+
+            longest = max(self.num_links(), other.num_links())
+
+            return (excess_multiplier * excess / float(longest)) +\
+                   (disjoint_multiplier * disjoint / float(longest)) +\
+                   (matched_multiplier * weight_difference / matched)
 
     # ==================================================================================================================
     # OPERATOR OVERLOAD

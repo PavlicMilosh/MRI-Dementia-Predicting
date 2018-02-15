@@ -23,12 +23,12 @@ class NeuronGene:
 
 
     @classmethod
-    def constructor(cls,
+    def constructor1(cls,
                     neuron_type: NeuronType,
                     neuron_id: int,
                     split_x: float,
                     split_y: float,
-                    recurrent: bool,
+                    recurrent: bool = False,
                     activation: float = 1):
         ret = cls()
         ret.neuron_type = neuron_type
@@ -37,7 +37,16 @@ class NeuronGene:
         ret.split_y = split_y
         ret.activation_response = activation
         ret.recurrent = recurrent
+        return ret
+
 
     @classmethod
-    def constructor(cls) -> 'NeuronGene':
+    def constructor2(cls) -> 'NeuronGene':
         return cls()
+
+
+    @classmethod
+    def constructor3(cls, neuron_id) -> 'NeuronGene':
+        ret = cls()
+        ret.neuron_id = neuron_id
+        return ret
