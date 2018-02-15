@@ -1,9 +1,12 @@
 import tensorflow as tf
 import numpy as np
+import os
+
+MODELS_PATH = "models"
 
 
 class Model:
-    def __init__(self, neurons, links, input_neurons_num):
+    def __init__(self, neurons, links, input_neurons_num=4):
         """
         Constructor.
         :param neurons: array list of neurons
@@ -42,7 +45,7 @@ class Model:
             # add weight to neuron
             if link.to_neuron_id not in self.weights:
                 self.weights[link.to_neuron_id] = []
-            self.weights[link.to_neuron_id].append(float(link.weight))
+            self.weights[link.to_neuron_id].append(link.weight)
             # add input to neuron
             if link.to_neuron_id not in self.connections:
                 self.connections[link.to_neuron_id] = []
@@ -83,7 +86,7 @@ class Model:
                 sum = tf.reduce_sum(mul, name='sum_' + str(neuron_id))
                 # apply activation function
                 if self.is_output_neuron(neuron_id):
-                    activation = tf.sigmoid(sum, name="sigmoid" + str(neuron_id))
+                    activation = tf.sigmoid(sum, name="output")
                 else:
                     activation = tf.nn.leaky_relu(sum, alpha=0.2, name="relu_" + str(neuron_id))
 
@@ -102,7 +105,7 @@ class Model:
         :param neuron_id:
         :return:
         """
-        return self.neurons[self.input_neurons_num] == neuron_id
+        return self.neurons[self.input_neurons_num].neuron_id == neuron_id
 
     def is_input_neuron(self, neuron_id):
         """
@@ -156,21 +159,29 @@ class Model:
                 probs.append(sess.run(self.output, feed_dict=self.feed(x)))
         return probs
 
-    @staticmethod
-    def save_graph_summary(graph):
+    def save_graph_summary(self):
         """
         Save the computation graph to a TensorBoard summary file.
         When file is saved, in a new terminal, launch TensorBoard with the following shell command:
             tensorboard --logdir .
         """
         writer = tf.summary.FileWriter('.')
-        writer.add_graph(graph)
+        writer.add_graph(self.graph)
 
-    @staticmethod
-    def save_graph(graph):
+    def save_graph(self):
         """
         Save graph to file, so later can be loaded.
-        :param graph:
         :return:
         """
-        pass
+        with tf.Session(graph=self.graph) as sess:
+            saver = tf.train.Saver()
+            sess.run(tf.global_variables_initializer())
+
+            save_path = saver.save(sess, os.path.join(MODELS_PATH, "model"))
+            print("Model saved in path: %s" % save_path)
+
+            with open("models/.model.inputs", "w") as file:
+                for v in self.inputs.values():
+                    file.write(v.name + "\n")
+            with open("models/.model.output", "w") as file:
+                file.write(self.output.name)
