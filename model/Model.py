@@ -2,6 +2,8 @@ import tensorflow as tf
 import numpy as np
 import os
 
+from neat.NeuronType import NeuronType
+
 MODELS_PATH = "./../graph/models"
 LOG_PATH = "./../graph/log"
 
@@ -107,7 +109,13 @@ class Model:
         :param neuron_id:
         :return:
         """
-        return self.neurons[self.input_neurons_num].neuron_id == neuron_id
+        for neuron in self.neurons:
+            if neuron.neuron_id == neuron_id:
+                if neuron.neuron_type == NeuronType.OUTPUT:
+                    return True
+                else:
+                    return False
+        return False
 
     def is_input_neuron(self, neuron_id):
         """
@@ -115,9 +123,12 @@ class Model:
         :param neuron_id: id of neuron
         :return:
         """
-        for i in range(self.input_neurons_num):
-            if self.neurons[i].neuron_id == neuron_id:
-                return True
+        for neuron in self.neurons:
+            if neuron.neuron_id == neuron_id:
+                if neuron.neuron_type == NeuronType.INPUT:
+                    return True
+                else:
+                    return False
         return False
 
     def calculate_loss(self, X, y):

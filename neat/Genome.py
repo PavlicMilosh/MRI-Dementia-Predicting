@@ -1,4 +1,4 @@
-from random import uniform, randrange, randint
+from random import uniform, randint
 from math import sqrt
 from typing import List
 
@@ -481,11 +481,14 @@ class Genome(object):
                 disjoint += 1
                 i2 += 1
 
-            longest = max(self.num_links(), other.num_links())
+        longest = max(self.num_links(), other.num_links())
 
-            return (excess_multiplier * excess / float(longest)) +\
-                   (disjoint_multiplier * disjoint / float(longest)) +\
-                   (matched_multiplier * weight_difference / matched)
+        if matched == 0:
+            matched = 1
+
+        return (excess_multiplier * excess / float(longest)) +\
+               (disjoint_multiplier * disjoint / float(longest)) +\
+               (matched_multiplier * weight_difference / matched)
 
     # ==================================================================================================================
     # OPERATOR OVERLOAD

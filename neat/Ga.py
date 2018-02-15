@@ -303,7 +303,7 @@ class Ga(object):
         for species in self.species:
             species.purge()
 
-            if species.gens_no_improvement() > gens_allowed_with_no_improvement \
+            if species.gens_no_improvement > gens_allowed_with_no_improvement \
                     and species.best_fitness < self.best_ever_fitness:
                 self.species.remove(species)
 
