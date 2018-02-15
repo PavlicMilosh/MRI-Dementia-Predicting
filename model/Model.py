@@ -135,7 +135,9 @@ class Model:
         sub = np.subtract(probs, y)
         sqr = np.square(sub)
         sm = np.sum(sqr)
-        return 1 - sm / num_examples
+        loss = 1 - sm / num_examples
+        print(loss)
+        return loss
 
     def feed(self, data):
         """
@@ -165,7 +167,7 @@ class Model:
         """
         Save the computation graph to a TensorBoard summary file.
         When file is saved, in a new terminal, launch TensorBoard with the following shell command:
-            tensorboard --logdir .
+            tensorboard --logdir graph/log
         """
         writer = tf.summary.FileWriter(LOG_PATH)
         writer.add_graph(self.graph)
