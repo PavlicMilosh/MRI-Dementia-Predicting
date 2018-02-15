@@ -2,11 +2,13 @@ import random
 from math import sqrt
 from typing import List
 
+from data_preprocessing.preprocess_data import get_training_data, get_test_data
 from neat.InnovationDB import InnovationDB
 from neat.InovationType import InnovationType
 from neat.LinkGene import LinkGene
 from neat.NeuronGene import NeuronGene
 from neat.NeuronType import NeuronType
+from model import Model
 
 
 class Genome(object):
@@ -36,6 +38,7 @@ class Genome(object):
         self.genome_id = genome_id
         self.neurons = neurons
         self.links = links
+        self.model = None
         self.phenotype = phenotype
         self.fitness = fitness
         self.adjusted_fitness = adjusted_fitness
@@ -46,7 +49,6 @@ class Genome(object):
         self.inputs = inputs
         self.outputs = outputs
         self.depth = depth
-
 
     @classmethod
     def from_neurons_and_links(cls,
@@ -78,7 +80,6 @@ class Genome(object):
         ret.outputs = outputs
         return ret
 
-
     @classmethod
     def from_inputs_outputs(cls, genome_id: int, inputs: int, outputs: int):
         """
@@ -107,11 +108,9 @@ class Genome(object):
 
         return ret
 
-
     # ==================================================================================================================
     # MUTATIONS
     # ==================================================================================================================
-
 
     def add_link(self,
                  mutation_rate: float,
@@ -181,7 +180,6 @@ class Genome(object):
         else:
             gene = LinkGene.constructor(neuron1_id, neuron2_id, True, innovation_id, random.uniform(-1, 1), recurrent)
             self.links.append(gene)
-
 
     def add_neuron(self, mutation_rate: float, innovation_db: InnovationDB, num_tries_to_find_old_link: int):
 
@@ -286,7 +284,6 @@ class Genome(object):
             new_neuron = NeuronGene.constructor(NeuronType.HIDDEN, new_neuron_id, new_depth, new_width)
             self.neurons.append(new_neuron)
 
-
     def mutate_weights(self,
                        mutation_rate: float,
                        new_mutation_probability: float,
@@ -305,7 +302,6 @@ class Genome(object):
                 else:
                     self.links[idx].weight = random.uniform(-1, 1) * max_perturbation
 
-
     def mutate_activation_response(self,
                                    mutation_rate: float,
                                    max_perturbation: float):
@@ -319,24 +315,21 @@ class Genome(object):
             if random.uniform(0, 1) < mutation_rate:
                 self.neurons[idx].activation_response += random.uniform(-1, 1) * max_perturbation
 
-
     # ==================================================================================================================
     # PHENOTYPE
     # ==================================================================================================================
 
-
     def create_phenotype(self):
-        pass
-
+        self.model = Model.Model(self.neurons, self.links)
+        self.model.build()
+        return self.model
 
     def delete_phenotype(self):
         self.phenotype = None
 
-
     # ==================================================================================================================
     # HELPER METHODS
     # ==================================================================================================================
-
 
     def duplicate_link(self, neuron_in_id: int, neuron_out_id: int) -> bool:
         """
@@ -352,7 +345,6 @@ class Genome(object):
                 return True
         return False
 
-
     def already_have_this_neuron_id(self, neuron_id: int) -> bool:
         """
         Checks if genome already contains neuron represented with
@@ -366,7 +358,6 @@ class Genome(object):
                 return True
         return False
 
-
     # ==================================================================================================================
     # ACCESSOR METHODS
     # ==================================================================================================================
@@ -376,30 +367,27 @@ class Genome(object):
     def get_element_pos(self, neuron_id: int) -> int:
         pass
 
-
     def num_links(self):
         return len(self.links)
-
 
     def num_neurons(self):
         return len(self.neurons)
 
-
     def start_of_links(self):
         return next(iter(self.links))
-
 
     def split_y(self, index):
         return self.neurons[index].split_y
 
-
     def split_x(self, index):
         return self.neurons[index].split_x
 
-
-    def fitness(self):
-        pass
-
+    def get_fitness(self):
+        X, y = get_training_data()
+        if self.model is None:
+            raise AttributeError("Error. Phenotype is not created")
+        else:
+            return self.model.calculate_loss(X, y)
 
     # ==================================================================================================================
     # OPERATOR OVERLOAD
@@ -407,4 +395,3 @@ class Genome(object):
 
     def __lt__(self, other):
         return self.fitness < other.fitness
-

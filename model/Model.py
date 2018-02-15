@@ -3,7 +3,7 @@ import numpy as np
 
 
 class Model:
-    def __init__(self, neurons, links, input_neurons_num):
+    def __init__(self, neurons, links, input_neurons_num=4):
         """
         Constructor.
         :param neurons: array list of neurons
@@ -118,7 +118,7 @@ class Model:
     def calculate_loss(self, X, y):
         """
         Predict category for each row of data set, compare it with truth category and return how good predictions are.
-        Lower value means better graph.
+        Higher value means better graph.
         :param X: data set
         :param y: true categories
         :return:
@@ -130,7 +130,11 @@ class Model:
                 probs.append(sess.run(self.output, feed_dict=self.feed(x)))
 
         num_examples = X.shape[0]
-        return np.sum(np.square(np.subtract(probs, y))) / num_examples
+
+        sub = np.subtract(probs, y)
+        sqr = np.square(sub)
+        sm = np.sum(sqr)
+        return 1 - sm / num_examples
 
     def feed(self, data):
         """

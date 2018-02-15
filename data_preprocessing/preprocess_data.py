@@ -2,9 +2,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import os
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.preprocessing import Imputer, LabelEncoder, StandardScaler
 from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
 
 
 def fix_missing_data_mean(data):
@@ -127,22 +129,61 @@ def pca(data):
     return data
 
 
-if __name__ == "__main__":
+def get_training_data(path="../data/PCA/"):
+    """
+    Load training data from files.
+    :param path:
+    :return:
+    """
+    x_train = pd.read_csv(os.path.join(path, "x_train.csv")).values
+    y_train = pd.read_csv(os.path.join(path, "y_train.csv")).values
+
+    return x_train, y_train[:, 0]
+
+
+def get_test_data(path="../data/PCA/"):
+    """
+    Load test data from files.
+    :param path:
+    :return:
+    """
+    x_test = pd.read_csv(os.path.join(path, "x_test.csv"))
+    y_test = pd.read_csv(os.path.join(path, "y_test.csv"))
+
+    return x_test, y_test
+
+
+def get_data():
     # importing the dataset
     data = pd.read_csv('../data/oasis_longitudinal.csv')
 
     data = fix_missing_data_mean(data)
     data = encode_categorical_data(data)
-    print(data.head())
+
     # remove unimportant features
     for x in ['Subject ID', 'MRI ID', 'Visit', 'Hand']:
         data.drop(x, axis=1, inplace=True)
-    print(data.head())
+
+    # for x in ['M/F', 'MMSE', 'SES', 'MR Delay', 'ASF']:
+    #     data.drop(x, axis=1, inplace=True)
+
+    # heat_map(data)
+
     # split dataset
     X = data.iloc[:, 1:]
     y = data.iloc[:, 0]
 
     X = scale_data(X.astype('float'))
-    feature_importance(X, y)
-    # extract features
-    X = pca(X)
+
+    # feature_importance(X, y)
+
+    # X = pca(X)
+
+    x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    np.savetxt("x_train.csv", x_train, delimiter=",", fmt='%f')
+    np.savetxt("x_test.csv", x_test, delimiter=",", fmt='%f')
+    np.savetxt("y_train.csv", y_train, delimiter=",", fmt='%i')
+    np.savetxt("y_test.csv", y_test, delimiter=",", fmt='%i')
+
+    return x_train, x_test, y_train, y_test
