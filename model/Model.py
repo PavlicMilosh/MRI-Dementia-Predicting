@@ -74,7 +74,6 @@ class Model:
                     if self.is_input_neuron(input_neuron_id):
                         vertex = self.inputs[input_neuron_id]
                     else:
-                        # TODO: Ovde puca sada, ne postoji key sa tim neuronom
                         vertex = operations[input_neuron_id]
 
                     v_inputs.append(vertex)
@@ -96,6 +95,7 @@ class Model:
     def build(self):
         self.build_model()
         self.build_graph()
+        self.save_graph_summary(self.graph)
 
     def is_output_neuron(self, neuron_id):
         """
@@ -164,7 +164,7 @@ class Model:
         When file is saved, in a new terminal, launch TensorBoard with the following shell command:
             tensorboard --logdir .
         """
-        writer = tf.summary.FileWriter('.')
+        writer = tf.summary.FileWriter('./../graph/log')
         writer.add_graph(graph)
 
     @staticmethod

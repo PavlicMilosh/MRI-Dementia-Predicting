@@ -201,7 +201,6 @@ class Ga(object):
         :param fitness_scores:  List[float]           - scores
         :return:                List[Phenotype]       - phenotypes
         """
-        print("Epoch: " + str(self.generation) + ", Best ever fitness: " + str(self.best_ever_fitness))
 
         if len(fitness_scores) != len(self.genomes):
             return None

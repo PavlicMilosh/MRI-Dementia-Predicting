@@ -9,6 +9,9 @@ def evolve_networks(pop_size: int, num_inputs: int, num_outputs: int):
     ga.create_phenotypes()
 
     while True:
+
+        print("Epoch: [" + str(ga.generation) + "], Best ever fitness: [" + str(ga.best_ever_fitness) + "]")
+
         fitness_scores = []
         for genotype in ga.genomes:
             fitness_scores.append(genotype.get_fitness())
