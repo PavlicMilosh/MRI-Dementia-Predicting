@@ -21,3 +21,5 @@ gens_allowed_with_no_improvement = 15
 best_sweepers_num = 4
 compatibility_threshold = 0.26
 max_number_of_species = 10
+epsilon = 0.95
+max_generation = 500

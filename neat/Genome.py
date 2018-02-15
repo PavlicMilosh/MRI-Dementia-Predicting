@@ -96,6 +96,7 @@ class Genome(object):
         ret.neurons = neurons
         ret.links = links
         ret.inputs = inputs
+
         ret.outputs = outputs
         return ret
 

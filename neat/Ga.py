@@ -21,7 +21,7 @@ class Ga(object):
                  innovation_db: InnovationDB = None,
                  next_genome_id: int = 0,
                  next_species_id: int = 0,
-                 fittest_genome_id: int = 0,
+                 fittest_genome: Genome = None,
                  best_ever_fitness: float = 0,
                  total_fitness_adj: float = 0,
                  avg_fitness_adj: float = 0):
@@ -36,7 +36,7 @@ class Ga(object):
         self.next_species_id = next_species_id
         self.population_size = population_size
 
-        self.fittest_genome_id = fittest_genome_id
+        self.fittest_genome = fittest_genome
         self.best_ever_fitness = best_ever_fitness
 
         self.total_fitness_adj = total_fitness_adj  # adjusted fitness scores
@@ -288,6 +288,7 @@ class Ga(object):
 
         if self.genomes[0].fitness > self.best_ever_fitness:
             self.best_ever_fitness = self.genomes[0].fitness
+            self.fittest_genome = self.genomes[0]
 
         self.best_genomes.clear()
         for index in range(best_sweepers_num):
