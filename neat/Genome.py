@@ -184,9 +184,6 @@ class Genome(object):
         else:
             for i in range(num_tries_to_add_link):
 
-                print(str(self.inputs))
-                print(str(len(self.neurons) - 1))
-
                 neuron1_id = self.neurons[randint(0, len(self.neurons) - 1)].neuron_id
                 neuron2_id = self.neurons[randint(self.inputs, len(self.neurons) - 1)].neuron_id
 

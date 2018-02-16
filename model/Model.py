@@ -147,7 +147,7 @@ class Model:
         sqr = np.square(sub)
         sm = np.sum(sqr)
         loss = 1 - sm / num_examples
-        print(loss)
+        print("Current loss: [" + str(loss) + "]")
         return loss
 
     def feed(self, data):
