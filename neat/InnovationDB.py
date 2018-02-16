@@ -37,7 +37,7 @@ class InnovationDB:
 
         # add neurons
         for neuron_gene in neuron_genes:
-            ret.innovations.append(Innovation.create_neuron_innovation(neuron_gene.neuron_id,
+            ret.innovations.append(Innovation.create_neuron_innovation(neuron_gene.neuron_id, -1, -1,
                                                                        ret.next_innovation_num,
                                                                        NeuronType.INPUT))
             ret.next_innovation_num += 1
@@ -56,8 +56,8 @@ class InnovationDB:
 
 
     def check_link_innovation(self,
-                              neuron_in_id: int,
-                              neuron_out_id: int) -> int:
+                              neuron_from_id: int,
+                              neuron_to_id: int) -> int:
         """
         Checks if link innovation exists. Returns innovation id if it exists, or -1 otherwise.
 
@@ -67,7 +67,7 @@ class InnovationDB:
         """
 
         for innovation in self.innovations:
-            if innovation.neuron_in_id == neuron_in_id and innovation.neuron_out_id == neuron_out_id \
+            if innovation.neuron_from_id == neuron_from_id and innovation.neuron_to_id == neuron_to_id \
                     and innovation.innovation_type == InnovationType.NEW_LINK:
                 return innovation.innovation_id
         return -1
@@ -87,30 +87,33 @@ class InnovationDB:
 
 
     def check_neuron_between_innovation(self,
-                                        neuron_id: int,
-                                        neuron_in: int,
-                                        neuron_out: int):
+                                        neuron_in_id: int,
+                                        neuron_out_id: int):
         """
         Checks if neuron innovation between two other neurons exists.
-        :param neuron_id:
-        :param neuron_in:
-        :param neuron_out:
+        :param neuron_in_id:    int
+        :param neuron_out_id:   int
         :return: innovation id if it exists, -1 otherwise
         """
-        pass
+        for innovation in self.innovations:
+            if innovation.neuron_in_id == neuron_in_id and \
+               innovation.neuron_out_id == neuron_out_id and \
+               innovation.innovation_type == InnovationType.NEW_NEURON:
+                return innovation.innovation_id
+        return -1
 
     def create_link_innovation(self,
-                               neuron_in_id: int,
-                               neuron_out_id: int):
+                               neuron_from_id: int,
+                               neuron_to_id: int):
         """
         Creates innovation of type NEW_LINK.
 
-        :param neuron_in_id:    int             - id of the input neuron
-        :param neuron_out_id:   int             - id of the output neuron
+        :param neuron_from_id:    int             - id of the input neuron
+        :param neuron_to_id:   int             - id of the output neuron
         :return:
         """
 
-        innovation = Innovation.create_link_innovation(neuron_in_id, neuron_out_id, self.next_innovation_num)
+        innovation = Innovation.create_link_innovation(neuron_from_id, neuron_to_id, self.next_innovation_num)
 
         self.innovations.append(innovation)
         self.next_innovation_num += 1
@@ -118,16 +121,20 @@ class InnovationDB:
 
 
     def create_neuron_innovation(self,
+                                 from_neuron_id: int,
+                                 to_neuron_id: int,
                                  neuron_type: NeuronType):
         """
         Creates a new neuron innovation.
 
+        :param from_neuron_id:  int             - first neuron, where new one is between
+        :param to_neuron_id:    int             - second neuron, where new one is between
         :param neuron_type:     NeuronType      - type of neuron
         :return:
         """
 
-        innovation = Innovation.create_neuron_innovation(self.next_neuron_id, self.next_innovation_num, neuron_type)
-
+        innovation = Innovation.create_neuron_innovation(self.next_neuron_id, from_neuron_id, to_neuron_id,
+                                                         self.next_innovation_num, neuron_type)
         self.innovations.append(innovation)
         self.next_innovation_num += 1
         self.next_neuron_id += 1

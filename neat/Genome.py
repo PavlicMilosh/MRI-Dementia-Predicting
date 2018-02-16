@@ -105,59 +105,35 @@ class Genome(object):
             neuron.neuron_type = NeuronType.INPUT
             ret.neurons.append(neuron)
             if innovation_db.check_neuron_innovation(neuron.neuron_id) == -1:
-                innovation_db.create_neuron_innovation(neuron.neuron_type)
+                innovation_db.create_neuron_innovation(-1, -1, neuron.neuron_type)
 
-        for i in range(outputs):
-            neuron = innovation_db.create_neuron_from_id(i + inputs)
+        for o in range(outputs):
+            neuron = innovation_db.create_neuron_from_id(o + inputs)
             neuron.neuron_type = NeuronType.OUTPUT
             ret.neurons.append(neuron)
-            innovation_db.create_neuron_innovation(neuron.neuron_type)
-            for j in range(inputs):
-                innovation_id = innovation_db.check_link_innovation(ret.neurons[j].neuron_id,
-                                                               ret.neurons[inputs + i - 1].neuron_id)
+            innovation_db.create_neuron_innovation(-1, -1, neuron.neuron_type)
+            output_neuron_id = neuron.neuron_id
+
+            for i in range(inputs):
+
+                input_neuron_id = ret.neurons[i].neuron_id
+
+                innovation_id = innovation_db.check_link_innovation(input_neuron_id,
+                                                                    output_neuron_id)
                 if innovation_id == -1:
                     innovation_id = innovation_db.next_innovation_num
-                    innovation_db.next_innovation_num += 1
-                    innovation_db.create_link_innovation(j, i)
+                    innovation_db.create_link_innovation(input_neuron_id,
+                                                         output_neuron_id)
 
-                print(str(ret.neurons[j].neuron_id) + " " + str(ret.neurons[i + inputs - 1].neuron_id))
-
-                ret.links.append(LinkGene(ret.neurons[j].neuron_id,
-                                          ret.neurons[i + inputs - 1].neuron_id,
+                ret.links.append(LinkGene(input_neuron_id, output_neuron_id,
                                           1.0, True, False, innovation_id))
 
         return ret
 
+
     # ==================================================================================================================
     # MUTATIONS
     # ==================================================================================================================
-
-    @classmethod
-    def from_links_neurons(cls,
-                           neurons: List[NeuronGene],
-                           links: List[LinkGene],
-                           inputs: int,
-                           outputs: int):
-        ret = cls()
-        ret.neurons = neurons
-        ret.links = links
-        ret.inputs = inputs
-
-        ret.outputs = outputs
-        return ret
-
-
-    def get_element_pos(self, neuron_id: int) -> int:
-        """
-        Finds position (indx) of neuron by given neuron id.
-
-        :param neuron_id: int   - id of neuron
-        :return:          int   - position if found, -1 if not
-        """
-        for i in range(len(self.neurons)):
-            if self.neurons[i].neuron_id == neuron_id:
-                return i
-        return -1
 
 
     def add_link(self,
@@ -207,14 +183,16 @@ class Genome(object):
 
         else:
             for i in range(num_tries_to_add_link):
-                neuron1_id = self.neurons[randint(0, len(self.neurons) - 1)].neuron_id
 
                 print(str(self.inputs))
                 print(str(len(self.neurons) - 1))
+
+                neuron1_id = self.neurons[randint(0, len(self.neurons) - 1)].neuron_id
                 neuron2_id = self.neurons[randint(self.inputs, len(self.neurons) - 1)].neuron_id
+
                 # second neuron must not be input or bias
-                if self.neurons[self.get_element_pos(neuron2_id)].neuron_type != NeuronType.INPUT \
-                        and self.neurons[self.get_element_pos(neuron2_id)].neuron_type != NeuronType.BIAS:
+                if self.neurons[self.get_element_pos(neuron2_id)].neuron_type != NeuronType.INPUT and \
+                   self.neurons[self.get_element_pos(neuron2_id)].neuron_type != NeuronType.BIAS:
                     continue
 
                 if self.duplicate_link(neuron1_id, neuron2_id) or neuron1_id == neuron2_id:
@@ -222,6 +200,7 @@ class Genome(object):
                     neuron2_id = -1
                 else:
                     break
+
         if neuron1_id < 0 or neuron2_id < 0:
             return
 
@@ -234,11 +213,9 @@ class Genome(object):
         if innovation_id < 0:
             innovation_db.create_link_innovation(neuron1_id, neuron2_id)
             innovation_id = innovation_db.next_number() - 1
-            gene = LinkGene.constructor1(neuron1_id, neuron2_id, True, innovation_id, uniform(-1, 1), recurrent)
-            self.links.append(gene)
-        else:
-            gene = LinkGene.constructor1(neuron1_id, neuron2_id, True, innovation_id, uniform(-1, 1), recurrent)
-            self.links.append(gene)
+
+        gene = LinkGene.constructor1(neuron1_id, neuron2_id, True, innovation_id, uniform(-1, 1), recurrent)
+        self.links.append(gene)
 
 
     def add_neuron(self, mutation_rate: float, innovation_db: InnovationDB, num_tries_to_find_old_link: int):
@@ -265,13 +242,15 @@ class Genome(object):
         size_threshold = self.inputs + self.outputs + 5
 
         if len(self.links) > size_threshold:
-            for i in range(num_tries_to_find_old_link):
-                chosen_link_index = randint(0, len(self.links) - 1 - int(sqrt(len(self.links))))
 
+            for i in range(num_tries_to_find_old_link):
+
+                chosen_link_index = randint(0, len(self.links) - 1 - int(sqrt(len(self.links))))
                 from_neuron = self.links[chosen_link_index].from_neuron_id
 
-                if self.links[chosen_link_index].enabled and not self.links[chosen_link_index].recurrent \
-                        and self.neurons[self.get_element_pos(from_neuron)].neuron_type != NeuronType.BIAS:
+                if self.links[chosen_link_index].enabled and \
+                   not self.links[chosen_link_index].recurrent and \
+                   self.neurons[self.get_element_pos(from_neuron)].neuron_type != NeuronType.BIAS:
                     old_link_found = True
                     break
 
@@ -279,63 +258,74 @@ class Genome(object):
                 return
 
         else:
-            while not old_link_found:
-                chosen_link_index = randint(0, len(self.links) - 1)
 
+            while not old_link_found:
+
+                chosen_link_index = randint(0, len(self.links) - 1)
                 from_neuron = self.links[chosen_link_index].from_neuron_id
 
-                if self.links[chosen_link_index].enabled \
-                        and not self.links[chosen_link_index].recurrent \
-                        and self.neurons[self.get_element_pos(from_neuron)].neuron_type != NeuronType.BIAS:
+                if self.links[chosen_link_index].enabled and \
+                   not self.links[chosen_link_index].recurrent and \
+                   self.neurons[self.get_element_pos(from_neuron)].neuron_type != NeuronType.BIAS:
                     old_link_found = True
 
         self.links[chosen_link_index].enabled = False
 
         original_weight = self.links[chosen_link_index].weight
+        from_neuron_id = self.links[chosen_link_index].from_neuron_id
+        to_neuron_id = self.links[chosen_link_index].to_neuron_id
 
-        from_neuron = self.links[chosen_link_index].from_neuron_id
-        to_neuron = self.links[chosen_link_index].to_neuron_id
+        # new_depth = (self.neurons[self.get_element_pos(from_neuron)].split_y
+        #              + self.neurons[self.get_element_pos(to_neuron)].split_y) / 2
+        # new_width = (self.neurons[self.get_element_pos(from_neuron)].split_x
+        #              + self.neurons[self.get_element_pos(to_neuron)].split_x) / 2
 
-        innovation_id = innovation_db.check_neuron_innovation()
+        innovation_id = innovation_db.check_neuron_between_innovation(from_neuron_id, to_neuron_id)
 
+        # if innovation was found, check if it already exists
         if innovation_id > 0:
+
             neuron_id = innovation_db.get_neuron_id(innovation_id)
             if self.already_have_this_neuron_id(neuron_id):
                 innovation_id = -1
 
+        # if innovation doesn't exists
         if innovation_id < 0:
-            new_neuron_id = innovation_db.create_neuron_innovation(NeuronType.HIDDEN)
+
+            new_neuron_id = innovation_db.create_neuron_innovation(from_neuron_id, to_neuron_id, NeuronType.HIDDEN)
 
             self.neurons.append(NeuronGene.constructor1(NeuronType.HIDDEN, new_neuron_id, innovation_id))
 
+            # create first link between first neuron and new neuron
             link1_id = innovation_db.next_number()
-            innovation_db.create_link_innovation(from_neuron, new_neuron_id)
-
-            link1 = LinkGene.constructor1(from_neuron, new_neuron_id, True, link1_id, 1., False)
+            innovation_db.create_link_innovation(from_neuron_id, new_neuron_id)
+            link1 = LinkGene.constructor1(from_neuron_id, new_neuron_id, True, link1_id, 1.0, False)
             self.links.append(link1)
 
+            # create second link between new neuron and second neuron
             link2_id = innovation_db.next_number()
-            innovation_db.create_link_innovation(new_neuron_id, to_neuron)
-
-            link2 = LinkGene.constructor1(new_neuron_id, from_neuron, True, link2_id, original_weight)
+            innovation_db.create_link_innovation(new_neuron_id, to_neuron_id)
+            link2 = LinkGene.constructor1(new_neuron_id, from_neuron_id, True, link2_id, original_weight)
             self.links.append(link2)
 
         else:
+
             new_neuron_id = innovation_db.get_neuron_id(innovation_id)
+            link1_id = innovation_db.check_link_innovation(from_neuron_id, new_neuron_id)
+            link2_id = innovation_db.check_link_innovation(new_neuron_id, to_neuron_id)
 
-            link1_id = innovation_db.check_link_innovation(from_neuron, new_neuron_id)
-            link2_id = innovation_db.check_link_innovation(new_neuron_id, to_neuron)
-
+            # if one of links doesn't exists in innovation database
             if (link1_id < 0) or (link2_id < 0):
                 return
 
-            link1 = LinkGene.constructor1(from_neuron, new_neuron_id, True, link1_id, 1., False)
-            link2 = LinkGene.constructor1(new_neuron_id, to_neuron, True, link2_id, original_weight, False)
+            link1 = LinkGene.constructor1(from_neuron_id, new_neuron_id, True, link1_id, 1.0, False)
+            link2 = LinkGene.constructor1(new_neuron_id, to_neuron_id, True, link2_id, original_weight, False)
 
             self.links.append(link1)
             self.links.append(link2)
 
             self.neurons.append(NeuronGene.constructor1(NeuronType.HIDDEN, new_neuron_id, innovation_id))
+
 
     def mutate_weights(self,
                        mutation_rate: float,
@@ -441,6 +431,20 @@ class Genome(object):
             raise AttributeError("Error. Phenotype is not created")
         else:
             return self.model.calculate_loss(X, y)
+
+
+    def get_element_pos(self, neuron_id: int) -> int:
+        """
+        Finds position (indx) of neuron by given neuron id.
+
+        :param neuron_id: int   - id of neuron
+        :return:          int   - position if found, -1 if not
+        """
+        for i in range(len(self.neurons)):
+            if self.neurons[i].neuron_id == neuron_id:
+                return i
+        return -1
+
 
     # ==================================================================================================================
     # SCORE
