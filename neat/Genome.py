@@ -118,12 +118,12 @@ class Genome(object):
                 if innovation_id == -1:
                     innovation_id = innovation_db.next_innovation_num
                     innovation_db.next_innovation_num += 1
-                    innovation_db.create_link_innovation(j, i)
+                    innovation_db.create_link_innovation(j, i + inputs)
 
-                print(str(ret.neurons[j].neuron_id) + " " + str(ret.neurons[i + inputs - 1].neuron_id))
+                print(str(ret.neurons[j].neuron_id) + " " + str(ret.neurons[i + inputs].neuron_id))
 
                 ret.links.append(LinkGene(ret.neurons[j].neuron_id,
-                                          ret.neurons[i + inputs - 1].neuron_id,
+                                          ret.neurons[i + inputs].neuron_id,
                                           1.0, True, False, innovation_id))
 
         return ret
