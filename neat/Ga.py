@@ -5,10 +5,8 @@ from neat import Constants
 from neat.Constants import *
 from neat.Genome import Genome
 from neat.InnovationDB import InnovationDB
-from neat.LinkGene import LinkGene
 from neat.ParentType import ParentType
 from neat.Species import Species
-from neat.SplitDepth import SplitDepth
 
 
 class Ga(object):
