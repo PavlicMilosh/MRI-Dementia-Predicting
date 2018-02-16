@@ -156,10 +156,13 @@ class Model:
         :param data:
         :return:
         """
-        feed = {}
-        for i in range(len(self.inputs)):
-            feed[self.inputs[i]] = data[i]
-        return feed
+        try:
+            feed = {}
+            for i in range(len(self.inputs)):
+                feed[self.inputs[i]] = data[i]
+            return feed
+        except Exception:
+            pass
 
     def predict(self, X):
         """

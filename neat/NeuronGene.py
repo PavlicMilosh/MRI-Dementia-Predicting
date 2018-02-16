@@ -11,32 +11,28 @@ class NeuronGene:
                  neuron_type: NeuronType = None,
                  recurrent: bool = False,
                  activation_response: float = 0.0,
-                 split_x: int = 0,
-                 split_y: int = 0):
+                 innovation_id: int = -1):
 
         self.neuron_id = neuron_id
         self.neuron_type = neuron_type
         self.recurrent = recurrent
         self.activation_response = activation_response
-        self.split_x = split_x
-        self.split_y = split_y
+        self.innovation_id = innovation_id
 
 
     @classmethod
     def constructor1(cls,
                      neuron_type: NeuronType,
                      neuron_id: int,
-                     split_x: float,
-                     split_y: float,
+                     innovation_id: int,
                      recurrent: bool = False,
                      activation: float = 1):
         ret = cls()
         ret.neuron_type = neuron_type
         ret.neuron_id = neuron_id
-        ret.split_x = split_x
-        ret.split_y = split_y
         ret.activation_response = activation
         ret.recurrent = recurrent
+        ret.innovation_id = innovation_id
         return ret
 
 

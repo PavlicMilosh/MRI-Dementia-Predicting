@@ -4,12 +4,12 @@ class LinkGene:
     """
 
     def __init__(self,
-                 from_neuron_id: int    = 0,
-                 to_neuron_id: int      = 0,
-                 weight: float          = 0.0,
-                 enabled: bool          = False,
-                 recurrent: bool        = False,
-                 innovation_id: int     = 0):
+                 from_neuron_id: int = 0,
+                 to_neuron_id: int = 0,
+                 weight: float = 0.0,
+                 enabled: bool = False,
+                 recurrent: bool = False,
+                 innovation_id: int = 0):
 
         self.from_neuron_id = from_neuron_id
         self.to_neuron_id = to_neuron_id

@@ -137,8 +137,3 @@ class Species:
 
     def __lt__(self, other):
         return self.best_fitness < other.best_fitness
-
-
-
-
-

@@ -2,10 +2,10 @@ from random import uniform, randint
 from math import sqrt
 from typing import List
 
-from data_preprocessing.preprocess_data import get_training_data, get_test_data
+from data_preprocessing.preprocess_data import get_training_data
 from neat.Constants import excess_multiplier, disjoint_multiplier, matched_multiplier
 from neat.InnovationDB import InnovationDB
-from neat.InovationType import InnovationType
+from neat.InnovationType import InnovationType
 from neat.LinkGene import LinkGene
 from neat.NeuronGene import NeuronGene
 from neat.NeuronType import NeuronType
@@ -82,13 +82,14 @@ class Genome(object):
         return ret
 
     @classmethod
-    def from_inputs_outputs(cls, genome_id: int, inputs: int, outputs: int):
+    def from_inputs_outputs(cls, genome_id: int, inputs: int, outputs: int, innovation_db: InnovationDB):
         """
         Creates object of class Genome from number of inputs and outputs.
 
-        :param genome_id: int       - id
-        :param inputs:    int       - number of inputs
-        :param outputs:   int       - number of outputs
+        :param genome_id: int               - id
+        :param inputs:    int               - number of inputs
+        :param outputs:   int               - number of outputs
+        :param innovation_db: InnovationDB  - database of all innovations
         :return:          Genome
         """
 
@@ -100,14 +101,30 @@ class Genome(object):
         ret.links = []
 
         for i in range(inputs):
-            ret.neurons.append(NeuronGene(i, NeuronType.INPUT, False, 0, 0, 0))
+            neuron = innovation_db.create_neuron_from_id(i)
+            neuron.neuron_type = NeuronType.INPUT
+            ret.neurons.append(neuron)
+            if innovation_db.check_neuron_innovation(neuron.neuron_id) == -1:
+                innovation_db.create_neuron_innovation(neuron.neuron_type)
 
         for i in range(outputs):
-            ret.neurons.append(NeuronGene(i + inputs, NeuronType.OUTPUT, False, 0, 1, 1))
+            neuron = innovation_db.create_neuron_from_id(i + inputs)
+            neuron.neuron_type = NeuronType.OUTPUT
+            ret.neurons.append(neuron)
+            innovation_db.create_neuron_innovation(neuron.neuron_type)
             for j in range(inputs):
+                innovation_id = innovation_db.check_link_innovation(ret.neurons[j].neuron_id,
+                                                               ret.neurons[inputs + i - 1].neuron_id)
+                if innovation_id == -1:
+                    innovation_id = innovation_db.next_innovation_num
+                    innovation_db.next_innovation_num += 1
+                    innovation_db.create_link_innovation(j, i)
+
+                print(str(ret.neurons[j].neuron_id) + " " + str(ret.neurons[i + inputs - 1].neuron_id))
+
                 ret.links.append(LinkGene(ret.neurons[j].neuron_id,
-                                          ret.neurons[i + inputs].neuron_id,
-                                          1.0, True, False, 0))
+                                          ret.neurons[i + inputs - 1].neuron_id,
+                                          1.0, True, False, innovation_id))
 
         return ret
 
@@ -192,7 +209,8 @@ class Genome(object):
             for i in range(num_tries_to_add_link):
                 neuron1_id = self.neurons[randint(0, len(self.neurons) - 1)].neuron_id
 
-                # TODO: Ovde isto... zasto +1 na self.inputs
+                print(str(self.inputs))
+                print(str(len(self.neurons) - 1))
                 neuron2_id = self.neurons[randint(self.inputs, len(self.neurons) - 1)].neuron_id
                 # second neuron must not be input or bias
                 if self.neurons[self.get_element_pos(neuron2_id)].neuron_type != NeuronType.INPUT \
@@ -207,14 +225,14 @@ class Genome(object):
         if neuron1_id < 0 or neuron2_id < 0:
             return
 
-        innovation_id = innovation_db.check_innovation(neuron1_id, neuron2_id, InnovationType.NEW_LINK)
+        innovation_id = innovation_db.check_link_innovation(neuron1_id, neuron2_id)
 
-        if self.neurons[self.get_element_pos(neuron1_id)].split_y > \
-                self.neurons[self.get_element_pos(neuron2_id)].split_y:
-            recurrent = True
+        # if self.neurons[self.get_element_pos(neuron1_id)].split_y > \
+        #         self.neurons[self.get_element_pos(neuron2_id)].split_y:
+        #     recurrent = True
 
         if innovation_id < 0:
-            innovation_db.create_link_innovation(neuron1_id, neuron2_id, InnovationType.NEW_LINK)
+            innovation_db.create_link_innovation(neuron1_id, neuron2_id)
             innovation_id = innovation_db.next_number() - 1
             gene = LinkGene.constructor1(neuron1_id, neuron2_id, True, innovation_id, uniform(-1, 1), recurrent)
             self.links.append(gene)
@@ -278,12 +296,7 @@ class Genome(object):
         from_neuron = self.links[chosen_link_index].from_neuron_id
         to_neuron = self.links[chosen_link_index].to_neuron_id
 
-        new_depth = (self.neurons[self.get_element_pos(from_neuron)].split_y
-                     + self.neurons[self.get_element_pos(to_neuron)].split_y) / 2
-        new_width = (self.neurons[self.get_element_pos(from_neuron)].split_x
-                     + self.neurons[self.get_element_pos(to_neuron)].split_x) / 2
-
-        innovation_id = innovation_db.check_innovation(from_neuron, to_neuron, InnovationType.NEW_NEURON)
+        innovation_id = innovation_db.check_neuron_innovation()
 
         if innovation_id > 0:
             neuron_id = innovation_db.get_neuron_id(innovation_id)
@@ -291,20 +304,18 @@ class Genome(object):
                 innovation_id = -1
 
         if innovation_id < 0:
-            new_neuron_id = innovation_db.create_neuron_innovation(from_neuron, to_neuron,
-                                                                   InnovationType.NEW_NEURON, NeuronType.HIDDEN,
-                                                                   new_width, new_depth)
+            new_neuron_id = innovation_db.create_neuron_innovation(NeuronType.HIDDEN)
 
-            self.neurons.append(NeuronGene.constructor1(NeuronType.HIDDEN, new_neuron_id, new_depth, new_width))
+            self.neurons.append(NeuronGene.constructor1(NeuronType.HIDDEN, new_neuron_id, innovation_id))
 
             link1_id = innovation_db.next_number()
-            innovation_db.create_link_innovation(from_neuron, new_neuron_id, InnovationType.NEW_LINK)
+            innovation_db.create_link_innovation(from_neuron, new_neuron_id)
 
             link1 = LinkGene.constructor1(from_neuron, new_neuron_id, True, link1_id, 1., False)
             self.links.append(link1)
 
             link2_id = innovation_db.next_number()
-            innovation_db.create_link_innovation(new_neuron_id, to_neuron, InnovationType.NEW_LINK)
+            innovation_db.create_link_innovation(new_neuron_id, to_neuron)
 
             link2 = LinkGene.constructor1(new_neuron_id, from_neuron, True, link2_id, original_weight)
             self.links.append(link2)
@@ -312,8 +323,8 @@ class Genome(object):
         else:
             new_neuron_id = innovation_db.get_neuron_id(innovation_id)
 
-            link1_id = innovation_db.check_innovation(from_neuron, new_neuron_id, InnovationType.NEW_LINK)
-            link2_id = innovation_db.check_innovation(new_neuron_id, to_neuron, InnovationType.NEW_LINK)
+            link1_id = innovation_db.check_link_innovation(from_neuron, new_neuron_id)
+            link2_id = innovation_db.check_link_innovation(new_neuron_id, to_neuron)
 
             if (link1_id < 0) or (link2_id < 0):
                 return
@@ -324,7 +335,7 @@ class Genome(object):
             self.links.append(link1)
             self.links.append(link2)
 
-            self.neurons.append(NeuronGene.constructor1(NeuronType.HIDDEN, new_neuron_id, new_depth, new_width))
+            self.neurons.append(NeuronGene.constructor1(NeuronType.HIDDEN, new_neuron_id, innovation_id))
 
     def mutate_weights(self,
                        mutation_rate: float,
@@ -422,14 +433,6 @@ class Genome(object):
 
     def start_of_links(self):
         return iter(self.links)
-
-
-    def split_y(self, index):
-        return self.neurons[index].split_y
-
-
-    def split_x(self, index):
-        return self.neurons[index].split_x
 
 
     def get_fitness(self):
