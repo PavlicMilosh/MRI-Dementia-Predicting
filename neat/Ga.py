@@ -5,6 +5,7 @@ from neat import Constants
 from neat.Constants import *
 from neat.Genome import Genome
 from neat.InnovationDB import InnovationDB
+from neat.LinkGene import LinkGene
 from neat.ParentType import ParentType
 from neat.Species import Species
 
@@ -121,9 +122,9 @@ class Ga(object):
                 cur_mother = next(mother_it, None)
 
             if len(baby_links) == 0:
-                baby_links.append(selected_link)
+                baby_links.append(LinkGene.copy(selected_link))
             elif baby_links[len(baby_links) - 1].innovation_id != selected_link.innovation_id:
-                baby_links.append(selected_link)
+                baby_links.append(LinkGene.copy(selected_link))
 
             self.add_neuron_id(selected_link.from_neuron_id, neuron_ids)
             self.add_neuron_id(selected_link.to_neuron_id, neuron_ids)
@@ -194,14 +195,12 @@ class Ga(object):
 
         new_population = []
         spawned_so_far = 0
-
         for spc in range(len(self.species)):
             if spawned_so_far < population_size:
                 num_to_spawn = int(round(self.species[spc].spawns_required))
                 chosen_best_yet = False
 
                 for i in range(num_to_spawn):
-
                     if not chosen_best_yet:
                         baby = self.species[spc].leader
                         chosen_best_yet = True
@@ -216,10 +215,11 @@ class Ga(object):
                             if randrange(0, 1) < crossover_rate:
                                 g2 = self.species[spc].spawn()
 
-                                attempts = 5
+                                attempts = 10
 
                                 while (g1.genome_id == g2.genome_id) and attempts > 0:
                                     g2 = self.species[spc].spawn()
+                                    attempts -= 1
 
                                 if g1.genome_id != g2.genome_id:
                                     baby = self.crossover(g1, g2)
@@ -230,17 +230,13 @@ class Ga(object):
                         self.next_genome_id += 1
 
                         baby.genome_id = self.next_genome_id
-
                         if baby.num_neurons() < max_permitted_neurons:
                             baby.add_neuron(chance_to_add_neuron, self.innovation_db, num_tries_to_find_old_link)
-
                         baby.add_link(chance_to_add_link,
                                       chance_to_add_recurrent_link,
                                       self.innovation_db,
                                       num_tries_to_find_loop, num_tries_to_add_link)
-
                         baby.mutate_weights(mutation_rate, probability_of_weight_replacement, max_weight_perturbation)
-
                         baby.mutate_activation_response(activation_mutation_rate, max_activation_perturbation)
 
                     baby.sort_link()
@@ -274,7 +270,7 @@ class Ga(object):
     def reset_and_kill(self):
         """
         Resets some values ready for the next epoch,
-        and kill all phenotypes and poorly performing species.
+        and kills all phenotypes and poorly performing species.
         """
 
         for species in self.species:

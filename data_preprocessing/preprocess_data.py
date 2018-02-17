@@ -147,10 +147,10 @@ def get_test_data(path="../data/PCA/"):
     :param path:
     :return:
     """
-    x_test = pd.read_csv(os.path.join(path, "x_test.csv"))
-    y_test = pd.read_csv(os.path.join(path, "y_test.csv"))
+    x_test = pd.read_csv(os.path.join(path, "x_test.csv")).values
+    y_test = pd.read_csv(os.path.join(path, "y_test.csv")).values
 
-    return x_test, y_test
+    return x_test, y_test[:, 0]
 
 
 def get_data():

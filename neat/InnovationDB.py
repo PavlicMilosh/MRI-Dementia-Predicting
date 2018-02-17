@@ -61,8 +61,8 @@ class InnovationDB:
         """
         Checks if link innovation exists. Returns innovation id if it exists, or -1 otherwise.
 
-        :param neuron_in_id:    int             - id of the input neuron
-        :param neuron_out_id:   int             - id of the output neuron
+        :param neuron_from_id:    int             - id of the input neuron
+        :param neuron_to_id:   int             - id of the output neuron
         :return:                int             - If exists, id of the innovation, else -1
         """
 
@@ -87,17 +87,17 @@ class InnovationDB:
 
 
     def check_neuron_between_innovation(self,
-                                        neuron_in_id: int,
-                                        neuron_out_id: int):
+                                        neuron_from_id: int,
+                                        neuron_to_id: int):
         """
         Checks if neuron innovation between two other neurons exists.
-        :param neuron_in_id:    int
-        :param neuron_out_id:   int
+        :param neuron_from_id:    int
+        :param neuron_to_id:   int
         :return: innovation id if it exists, -1 otherwise
         """
         for innovation in self.innovations:
-            if innovation.neuron_from_id == neuron_in_id and \
-               innovation.neuron_to_id == neuron_out_id and \
+            if innovation.neuron_from_id == neuron_from_id and \
+               innovation.neuron_to_id == neuron_to_id and \
                innovation.innovation_type == InnovationType.NEW_NEURON:
                 return innovation.innovation_id
         return -1

@@ -1,4 +1,8 @@
+import profile
+import re
+
 from data_preprocessing.preprocess_data import get_training_data, get_test_data
+from model.LoadModel import LoadModel
 from neat.Constants import epsilon, max_generation, population_size
 from neat.Ga import Ga
 
@@ -22,9 +26,16 @@ def evolve_networks(pop_size: int, num_inputs: int, num_outputs: int):
             return ga.fittest_genome
 
 
-if __name__ == '__main__':
+def main():
     best_network = evolve_networks(population_size, 4, 1)
-    model = best_network.phenotype.save_graph()
+    model = best_network.create_phenotype()
+    model.save_graph()
+    model.save_graph_summary()
     # do evaluation with evaluation set
     x_test, y_test = get_test_data()
     fitness = model.calculate_loss(x_test, y_test)
+    print(fitness)
+
+
+if __name__ == '__main__':
+    main()

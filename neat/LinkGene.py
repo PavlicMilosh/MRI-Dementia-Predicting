@@ -7,7 +7,7 @@ class LinkGene:
                  from_neuron_id: int = 0,
                  to_neuron_id: int = 0,
                  weight: float = 0.0,
-                 enabled: bool = False,
+                 enabled: bool = True,
                  recurrent: bool = False,
                  innovation_id: int = 0):
 
@@ -17,6 +17,8 @@ class LinkGene:
         self.enabled = enabled
         self.recurrent = recurrent
         self.innovation_id = innovation_id
+        if not self.enabled:
+            print("asdfasdfasdfasfas")
 
 
     @classmethod
@@ -34,6 +36,21 @@ class LinkGene:
         ret.innovation_id = innovation_id
         ret.weight = weight
         ret.recurrent = recurrent
+        if not ret.enabled:
+            print("asdfasdfasdfadfdfffadafsdfasdfasdfasdfasdfafafdffsfsdffaafsdafsdasdfsdff")
+        return ret
+
+
+    @classmethod
+    def copy(cls, other: 'LinkGene') -> 'LinkGene':
+        ret = cls()
+        ret.innovation_id = other.innovation_id
+        ret.from_neuron_id = other.from_neuron_id
+        ret.to_neuron_id = other.to_neuron_id
+        ret.weight = other.weight
+        ret.recurrent = other.recurrent
+        ret.enabled = other.enabled
+
         return ret
 
 

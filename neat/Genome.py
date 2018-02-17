@@ -103,15 +103,17 @@ class Genome(object):
         for i in range(inputs):
             neuron = innovation_db.create_neuron_from_id(i)
             neuron.neuron_type = NeuronType.INPUT
-            ret.neurons.append(neuron)
+
             if innovation_db.check_neuron_innovation(neuron.neuron_id) == -1:
                 innovation_db.create_neuron_innovation(-1, -1, neuron.neuron_type)
-
+            neuron.innovation_id = innovation_db.check_neuron_innovation(neuron.neuron_id)
+            ret.neurons.append(neuron)
         for o in range(outputs):
             neuron = innovation_db.create_neuron_from_id(o + inputs)
             neuron.neuron_type = NeuronType.OUTPUT
             ret.neurons.append(neuron)
             innovation_db.create_neuron_innovation(-1, -1, neuron.neuron_type)
+            neuron.innovation_id = innovation_db.check_neuron_innovation(neuron.innovation_id)
             output_neuron_id = neuron.neuron_id
 
             for i in range(inputs):
@@ -165,11 +167,6 @@ class Genome(object):
         if uniform(0, 1) < chance_of_looped:
             for i in range(num_tries_to_find_loop):
 
-                # TODO: Check if this is legit
-                # Imamo u nasem slucaju 4 input neurona, a pozicija nam treba
-                # kao indeks. Zasto onda stavljamo da trazi random int od 5?
-                # Indeksi nam idu 0, 1, 2, 3, treba da nadjemo sl neuron koji nije input
-                # valjda je ovo svrha ovog dela...
                 neuron_pos = randint(self.inputs, len(self.neurons) - 1)
 
                 if not self.neurons[neuron_pos].recurrent \
@@ -183,9 +180,6 @@ class Genome(object):
 
         else:
             for i in range(num_tries_to_add_link):
-
-                print(str(self.inputs))
-                print(str(len(self.neurons) - 1))
 
                 neuron1_id = self.neurons[randint(0, len(self.neurons) - 1)].neuron_id
                 neuron2_id = self.neurons[randint(self.inputs, len(self.neurons) - 1)].neuron_id
@@ -260,14 +254,13 @@ class Genome(object):
         else:
 
             while not old_link_found:
-
                 chosen_link_index = randint(0, len(self.links) - 1)
+                print("while skrnavi")
                 from_neuron = self.links[chosen_link_index].from_neuron_id
-
-                if self.links[chosen_link_index].enabled and \
-                   not self.links[chosen_link_index].recurrent and \
-                   self.neurons[self.get_element_pos(from_neuron)].neuron_type != NeuronType.BIAS:
-                    old_link_found = True
+                if self.links[chosen_link_index].enabled:
+                    if not self.links[chosen_link_index].recurrent:
+                        if self.neurons[self.get_element_pos(from_neuron)].neuron_type != NeuronType.BIAS:
+                            old_link_found = True
 
         self.links[chosen_link_index].enabled = False
 
@@ -284,7 +277,6 @@ class Genome(object):
 
         # if innovation was found, check if it already exists
         if innovation_id > 0:
-
             neuron_id = innovation_db.get_neuron_id(innovation_id)
             if self.already_have_this_neuron_id(neuron_id):
                 innovation_id = -1
@@ -294,12 +286,13 @@ class Genome(object):
 
             new_neuron_id = innovation_db.create_neuron_innovation(from_neuron_id, to_neuron_id, NeuronType.HIDDEN)
 
+            print(new_neuron_id)
             self.neurons.append(NeuronGene.constructor1(NeuronType.HIDDEN, new_neuron_id, innovation_id))
 
             # create first link between first neuron and new neuron
             link1_id = innovation_db.next_number()
             innovation_db.create_link_innovation(from_neuron_id, new_neuron_id)
-            link1 = LinkGene.constructor1(from_neuron_id, new_neuron_id, True, link1_id, 1.0, False)
+            link1 = LinkGene.constructor1(from_neuron_id, new_neuron_id, True, link1_id, 1.0)
             self.links.append(link1)
 
             # create second link between new neuron and second neuron
@@ -314,12 +307,13 @@ class Genome(object):
             link1_id = innovation_db.check_link_innovation(from_neuron_id, new_neuron_id)
             link2_id = innovation_db.check_link_innovation(new_neuron_id, to_neuron_id)
 
-            # if one of links doesn't exists in innovation database
+            # if one of links doesn't exist in innovation database
             if (link1_id < 0) or (link2_id < 0):
+                self.links[chosen_link_index].enabled = True
                 return
 
-            link1 = LinkGene.constructor1(from_neuron_id, new_neuron_id, True, link1_id, 1.0, False)
-            link2 = LinkGene.constructor1(new_neuron_id, to_neuron_id, True, link2_id, original_weight, False)
+            link1 = LinkGene.constructor1(from_neuron_id, new_neuron_id, True, link1_id, 1.0)
+            link2 = LinkGene.constructor1(new_neuron_id, to_neuron_id, True, link2_id, original_weight)
 
             self.links.append(link1)
             self.links.append(link2)
