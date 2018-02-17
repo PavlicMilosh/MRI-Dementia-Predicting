@@ -33,8 +33,7 @@ def main():
     model.save_graph_summary()
     # do evaluation with evaluation set
     x_test, y_test = get_test_data()
-    fitness = model.calculate_loss(x_test, y_test)
-    print(fitness)
+    model.calculate_loss(x_test, y_test)
 
 
 if __name__ == '__main__':
