@@ -255,7 +255,6 @@ class Genome(object):
 
             while not old_link_found:
                 chosen_link_index = randint(0, len(self.links) - 1)
-                print("while skrnavi")
                 from_neuron = self.links[chosen_link_index].from_neuron_id
                 if self.links[chosen_link_index].enabled:
                     if not self.links[chosen_link_index].recurrent:
@@ -286,7 +285,6 @@ class Genome(object):
 
             new_neuron_id = innovation_db.create_neuron_innovation(from_neuron_id, to_neuron_id, NeuronType.HIDDEN)
 
-            print(new_neuron_id)
             self.neurons.append(NeuronGene.constructor1(NeuronType.HIDDEN, new_neuron_id, innovation_id))
 
             # create first link between first neuron and new neuron
@@ -298,7 +296,7 @@ class Genome(object):
             # create second link between new neuron and second neuron
             link2_id = innovation_db.next_number()
             innovation_db.create_link_innovation(new_neuron_id, to_neuron_id)
-            link2 = LinkGene.constructor1(new_neuron_id, from_neuron_id, True, link2_id, original_weight)
+            link2 = LinkGene.constructor1(new_neuron_id, to_neuron_id, True, link2_id, original_weight)
             self.links.append(link2)
 
         else:
