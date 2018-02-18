@@ -4,8 +4,8 @@ import os
 
 from neat.NeuronType import NeuronType
 
-MODELS_PATH = "./../graph/models"
-LOG_PATH = "./../graph/log"
+MODELS_PATH = ".\\..\\graph\\models"
+LOG_PATH = ".\\..\\graph\\log"
 
 
 class Model:
@@ -80,7 +80,10 @@ class Model:
                     if self.is_input_neuron(input_neuron_id):
                         vertex = self.inputs[input_neuron_id]
                     else:
-                        vertex = operations[input_neuron_id]
+                        try:
+                            vertex = operations[input_neuron_id]
+                        except Exception:
+                            pass
 
                     v_inputs.append(vertex)
                 # multiply weights and inputs
@@ -101,7 +104,7 @@ class Model:
     def build(self):
         self.build_model()
         self.build_graph()
-        self.save_graph_summary()
+        # self.save_graph_summary()
 
     def is_output_neuron(self, neuron_id):
         """

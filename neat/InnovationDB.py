@@ -61,8 +61,8 @@ class InnovationDB:
         """
         Checks if link innovation exists. Returns innovation id if it exists, or -1 otherwise.
 
-        :param neuron_in_id:    int             - id of the input neuron
-        :param neuron_out_id:   int             - id of the output neuron
+        :param neuron_from_id:    int             - id of the input neuron
+        :param neuron_to_id:   int             - id of the output neuron
         :return:                int             - If exists, id of the innovation, else -1
         """
 
