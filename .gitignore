@@ -1,2 +1,4 @@
-data/*
+graph/*
 .idea
+data/*
+**/__pycache/

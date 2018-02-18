@@ -1,31 +1,35 @@
+from random import randint, randrange, uniform
+from typing import List
+
 from neat import Constants
 from neat.Constants import *
-from neat.LinkGene import LinkGene
-from neat.ParentType import ParentType
-from random import random, randint
 from neat.Genome import Genome
 from neat.InnovationDB import InnovationDB
+from neat.LinkGene import LinkGene
+from neat.ParentType import ParentType
 from neat.Species import Species
+from neat.graph import Graph
 
 
 class Ga(object):
+    """
+    Class represents genetic algorithm
+    """
 
     def __init__(self,
                  population_size: int,
                  inputs: int,
                  outputs: int,
                  generation: int = 0,
-                 innovation_db: InnovationDB = None,
                  next_genome_id: int = 0,
                  next_species_id: int = 0,
-                 fittest_genome_id: int = 0,
-                 best_ever_fitness: float = 0,
-                 total_fitness_adj: float = 0,
-                 avg_fitness_adj: float = 0):
+                 fittest_genome: Genome = None,
+                 best_ever_fitness: float = 0.0,
+                 total_fitness_adj: float = 0.0,
+                 avg_fitness_adj: float = 0.0):
 
         self.inputs = inputs
         self.outputs = outputs
-        self.innovation_db = innovation_db
 
         # current generation
         self.generation = generation
@@ -33,7 +37,7 @@ class Ga(object):
         self.next_species_id = next_species_id
         self.population_size = population_size
 
-        self.fittest_genome_id = fittest_genome_id
+        self.fittest_genome = fittest_genome
         self.best_ever_fitness = best_ever_fitness
 
         self.total_fitness_adj = total_fitness_adj  # adjusted fitness scores
@@ -45,40 +49,42 @@ class Ga(object):
 
         self.splits = []        # split depth
 
+        self.innovation_db = InnovationDB()
+
         for i in range(self.population_size):
             next_genome_id += 1
-            self.genomes.append(Genome.from_inputs_outputs(next_genome_id, inputs, outputs))
+            self.genomes.append(Genome.from_inputs_outputs(next_genome_id, inputs, outputs, self.innovation_db))
 
-        genome = Genome.from_inputs_outputs(1, inputs, outputs)
-        self.innovationDB = InnovationDB.from_genes(genome.links, genome.neurons)
-
-
-    # ======================================================================================================================
-    # CROSSOVER
-    # ======================================================================================================================
 
     def crossover(self, mother: Genome, father: Genome) -> Genome:
+        """
+        Performs a crossover between two genomes, returns a new combination (baby genome)
+
+        :param mother:  Genome      - one parent for crossover
+        :param father:  Genome      - other parent for crossover
+        :return:        Genome      - baby genome
+        """
 
         best_parent = None
 
-        # choose best parent
-        if mother.fitness() == father.fitness():
+        # choose the best parent
+        if mother.fitness == father.fitness:
             if mother.num_links() == father.num_links():
-                best_parent = ParentType.MOTHER if random.uniform(0, 1) > 0.5 else ParentType.FATHER
+                best_parent = ParentType.MOTHER if uniform(0, 1) > 0.5 else ParentType.FATHER
             else:
                 best_parent = ParentType.MOTHER if mother.num_links() < father.num_links() else ParentType.FATHER
         else:
-            best_parent = ParentType.MOTHER if mother.fitness() > father.fitness() else ParentType.FATHER
+            best_parent = ParentType.MOTHER if mother.fitness > father.fitness else ParentType.FATHER
 
         baby_neurons = []
         baby_links = []
         neuron_ids = []
 
-        mother_it = iter(mother.start_of_links())
-        father_it = iter(father.start_of_links())
+        mother_it = mother.start_of_links()
+        father_it = father.start_of_links()
 
-        cur_mother = LinkGene.constructor()
-        cur_father = LinkGene.constructor()
+        cur_mother = next(mother_it)
+        cur_father = next(father_it)
 
         selected_link = None
 
@@ -112,14 +118,14 @@ class Ga(object):
 
             # if innovations are same
             elif cur_mother.innovation_id == cur_father.innovation_id:
-                selected_link = cur_mother if random.uniform(0, 1) > 0.5 else cur_father
+                selected_link = cur_mother if uniform(0, 1) > 0.5 else cur_father
                 cur_father = next(father_it, None)
                 cur_mother = next(mother_it, None)
 
             if len(baby_links) == 0:
-                baby_links.append(selected_link)
+                baby_links.append(LinkGene.copy(selected_link))
             elif baby_links[len(baby_links) - 1].innovation_id != selected_link.innovation_id:
-                baby_links.append(selected_link)
+                baby_links.append(LinkGene.copy(selected_link))
 
             self.add_neuron_id(selected_link.from_neuron_id, neuron_ids)
             self.add_neuron_id(selected_link.to_neuron_id, neuron_ids)
@@ -134,24 +140,34 @@ class Ga(object):
                                                     baby_links,
                                                     mother.inputs,
                                                     mother.outputs)
+
         self.next_genome_id += 1
 
         return baby_genome
 
 
-    def add_neuron_id(self, neuron_id: int, neuron_ids: list):
+    def add_neuron_id(self, neuron_id: int, neuron_ids: List[int]):
+        """
+        Adds neuron id if it doesn't exists in the list.
+
+        :param neuron_id:   int         - Id of neuron to be added
+        :param neuron_ids:  List[int]   -List of neurons
+        :return:
+        """
         for n in neuron_ids:
-            if n.neuron_id == neuron_id:
+            if n == neuron_id:
                 return
         neuron_ids.append(neuron_id)
 
 
-    '''Creates and returns phenotypes from the genomes'''
     def create_phenotypes(self):
+        """
+        Creates and returns phenotypes from the genomes.
+
+        :return:
+        """
         networks = []
         for genome in self.genomes:
-            self.calculate_net_depth(genome)
-
             network = genome.create_phenotype()
 
             networks.append(network)
@@ -159,22 +175,16 @@ class Ga(object):
         return networks
 
 
-    '''Calculates network depth of a given genome'''
-    def calculate_net_depth(self, genome: Genome):
-        pass
-        max_so_far = 0
+    def epoch(self, fitness_scores: List[float]):
+        """
+        Performs one epoch of genetic algorithm and returns a list of new phenotypes.
 
-        for nd in range(len(genome.num_neurons())):
-            for split in self.splits:
-                if genome.split_y(nd) > split.val:
-                    max_so_far = split.depth
+        :param fitness_scores:  List[float]           - scores
+        :return:                List[Phenotype]       - phenotypes
+        """
 
-        genome.depth = max_so_far + 2
-
-    '''Performs one epoch of genetic algorithm and returns a list of new phenotypes'''
-    def epoch(self, fitness_scores: 'List of floats'):
         if len(fitness_scores) != len(self.genomes):
-            return
+            return None
 
         self.reset_and_kill()
 
@@ -187,14 +197,12 @@ class Ga(object):
 
         new_population = []
         spawned_so_far = 0
-
         for spc in range(len(self.species)):
             if spawned_so_far < population_size:
-                num_to_spawn = round(self.species[spc].spawns_required)
+                num_to_spawn = int(round(self.species[spc].spawns_required))
                 chosen_best_yet = False
 
                 for i in range(num_to_spawn):
-
                     if not chosen_best_yet:
                         baby = self.species[spc].leader
                         chosen_best_yet = True
@@ -206,13 +214,14 @@ class Ga(object):
                         else:
                             g1 = self.species[spc].spawn()
 
-                            if random.randrange(0, 1) < crossover_rate:
+                            if randrange(0, 1) < crossover_rate:
                                 g2 = self.species[spc].spawn()
 
-                                attempts = 5
+                                attempts = 10
 
                                 while (g1.genome_id == g2.genome_id) and attempts > 0:
                                     g2 = self.species[spc].spawn()
+                                    attempts -= 1
 
                                 if g1.genome_id != g2.genome_id:
                                     baby = self.crossover(g1, g2)
@@ -223,18 +232,16 @@ class Ga(object):
                         self.next_genome_id += 1
 
                         baby.genome_id = self.next_genome_id
-
                         if baby.num_neurons() < max_permitted_neurons:
                             baby.add_neuron(chance_to_add_neuron, self.innovation_db, num_tries_to_find_old_link)
-
-                        baby.add_link(chance_to_add_link, chance_to_add_recurrent_link, self.innovation_db,
+                        baby.add_link(chance_to_add_link,
+                                      chance_to_add_recurrent_link,
+                                      self.innovation_db,
                                       num_tries_to_find_loop, num_tries_to_add_link)
-
                         baby.mutate_weights(mutation_rate, probability_of_weight_replacement, max_weight_perturbation)
-
                         baby.mutate_activation_response(activation_mutation_rate, max_activation_perturbation)
 
-                    baby.sort_genes()
+                    baby.sort_link()
 
                     new_population.append(baby)
 
@@ -251,26 +258,41 @@ class Ga(object):
 
         self.genomes = new_population
 
+        legit = 0
+
+        for g in new_population:
+            graph = Graph.from_genome(g)
+            if graph.is_cyclic_graph():
+                print("sranjeee")
+            else:
+                legit += 1
+
+        print("legit: " + str(legit))
+
         new_phenotypes = []
 
         for genotype in self.genomes:
-            self.calculate_net_depth(self.genomes[genotype])
             phenotype = genotype.create_phenotype()
             new_phenotypes.append(phenotype)
+            print("phenotype")
 
         self.generation += 1
+
+        print("posle phenotype")
 
         return new_phenotypes
 
 
-    '''Resets some values ready for the next epoch,
-    and kill all phenotypes and poorly performing species'''
     def reset_and_kill(self):
+        """
+        Resets some values ready for the next epoch,
+        and kills all phenotypes and poorly performing species.
+        """
 
         for species in self.species:
             species.purge()
 
-            if species.gens_no_improvement() > gens_allowed_with_no_improvement \
+            if species.gens_no_improvement > gens_allowed_with_no_improvement \
                     and species.best_fitness < self.best_ever_fitness:
                 self.species.remove(species)
 
@@ -278,25 +300,34 @@ class Ga(object):
                 genome.delete_phenotype()
 
 
-    '''Sorts the population by fitness descending and keeps record of the best n genomes
-    and updates any fitness statistics accordingly'''
     def sort_and_record(self):
+        """
+        Sorts the population by fitness descending and keeps record of the best n genomes
+        and updates any fitness statistics accordingly.
+        """
         self.genomes.sort()
         self.genomes.reverse()
 
         if self.genomes[0].fitness > self.best_ever_fitness:
             self.best_ever_fitness = self.genomes[0].fitness
+            self.fittest_genome = self.genomes[0]
+            for neuron in self.fittest_genome.neurons:
+                print(neuron.neuron_id)
+            for link in self.fittest_genome.links:
+                print(str(link.from_neuron_id) + "\t" + str(link.to_neuron_id) + "\t" + str(link.enabled))
 
         self.best_genomes.clear()
         for index in range(best_sweepers_num):
             self.best_genomes.append(self.genomes[index])
 
 
-    '''Places individuals into their respecting species by calculating compatibility
-    with other members of the population and niching accordingly. 
-    Adjusting the fitness scores of each individual by species age and by sharing
-    and determines how many offsprings each individual should spawn'''
     def speciate_and_calculate_spawn_levels(self):
+        """
+        Places individuals into their respecting species by calculating compatibility
+        with other members of the population and niching accordingly.
+        Adjusting the fitness scores of each individual by species age and by sharing
+        and determines how many offsprings each individual should spawn.
+        """
 
         self.adjust_compatibility_threshold()
 
@@ -328,9 +359,11 @@ class Ga(object):
             species.calculate_spawn_amount()
 
 
-    '''Automatically adjusts the compatibility threshold in an attempt
-    to keep the number of species below the maximum'''
     def adjust_compatibility_threshold(self):
+        """
+        Automatically adjusts the compatibility threshold in an attempt
+        to keep the number of species below the maximum.
+        """
 
         if max_number_of_species < 1:
             return
@@ -344,13 +377,20 @@ class Ga(object):
             Constants.compatibility_threshold -= threshold_increment
 
 
-    '''Iterates through each species and calls adjust_fitness for each species'''
     def adjust_species_fitness(self):
+        """
+        Iterates through each species and calls adjust_fitness for each species.
+        """
         for species in self.species:
             species.adjust_fitness()
 
 
-    def tournament_selection(self, num_comparisons: int):
+    def tournament_selection(self, num_comparisons: int) -> Genome:
+        """
+
+        :param num_comparisons: int     -
+        :return:                Genome  - chosen genome
+        """
         best_fitness_so_far = 0
         chosen = 0
 
@@ -363,25 +403,15 @@ class Ga(object):
 
         return self.genomes[chosen]
 
-    def split(self, low: float, high: float, depth: float):
-        splits = []
-        span = high - low
-
-        splits.append(1)  # TODO: what is split_depth?
-
-        if depth > 6:
-            return splits
-        else:
-            self.split(low, low + span / 2, depth + 1)
-            self.split(low + span / 2, high, depth + 1)
-
-            return splits
-
 
     def get_best_phenotypes_from_last_generation(self):
+        """
+
+        :return:
+        """
         brains = []
 
         for genome in self.best_genomes:
-            self.calculate_net_depth(genome)
-
             brains.append(genome.create_phenotype())
+
+        return brains
