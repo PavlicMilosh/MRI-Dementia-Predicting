@@ -187,11 +187,13 @@ class Genome(object):
 
                 # first neuron must not be output
                 if self.neurons[self.get_element_pos(neuron1_id)].neuron_type == NeuronType.OUTPUT:
+                    neuron1_id = -1
                     continue
 
                 # second neuron must not be input or bias
                 if self.neurons[self.get_element_pos(neuron2_id)].neuron_type == NeuronType.INPUT and \
                    self.neurons[self.get_element_pos(neuron2_id)].neuron_type == NeuronType.BIAS:
+                    neuron2_id = -1
                     continue
 
                 if self.duplicate_link(neuron1_id, neuron2_id) or neuron1_id == neuron2_id:

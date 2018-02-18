@@ -1,4 +1,4 @@
-from random import random, randint, randrange, uniform
+from random import randint, randrange, uniform
 from typing import List
 
 from neat import Constants
@@ -8,6 +8,7 @@ from neat.InnovationDB import InnovationDB
 from neat.LinkGene import LinkGene
 from neat.ParentType import ParentType
 from neat.Species import Species
+from neat.graph import Graph
 
 
 class Ga(object):
@@ -139,6 +140,7 @@ class Ga(object):
                                                     baby_links,
                                                     mother.inputs,
                                                     mother.outputs)
+
         self.next_genome_id += 1
 
         return baby_genome
@@ -256,13 +258,27 @@ class Ga(object):
 
         self.genomes = new_population
 
+        legit = 0
+
+        for g in new_population:
+            graph = Graph.from_genome(g)
+            if graph.is_cyclic_graph():
+                print("sranjeee")
+            else:
+                legit += 1
+
+        print("legit: " + str(legit))
+
         new_phenotypes = []
 
         for genotype in self.genomes:
             phenotype = genotype.create_phenotype()
             new_phenotypes.append(phenotype)
+            print("phenotype")
 
         self.generation += 1
+
+        print("posle phenotype")
 
         return new_phenotypes
 

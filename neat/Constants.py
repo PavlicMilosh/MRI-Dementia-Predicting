@@ -22,7 +22,7 @@ best_sweepers_num = 4
 compatibility_threshold = 0.26
 max_number_of_species = 10
 epsilon = 0.95
-max_generation = 100
+max_generation = 50
 
 # score multipliers for speciation
 disjoint_multiplier = 1
