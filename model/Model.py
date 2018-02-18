@@ -1,3 +1,5 @@
+import random
+
 import tensorflow as tf
 import numpy as np
 import os
@@ -54,57 +56,91 @@ class Model:
                 self.connections[link.to_neuron_id] = []
             self.connections[link.to_neuron_id].append(link.from_neuron_id)
 
+
     def build_graph(self):
         """
-        Create TensorFlow Computational Graph based on model.
-        :return graph: constructed TF Graph
-        :return inputs: inputs to graph
-        :return output: output of graph
-        """
+       Create TensorFlow Computational Graph based on model.
+       :return graph: constructed TF Graph
+       :return inputs: inputs to graph
+       :return output: output of graph
+       """
         self.graph = tf.Graph()
+        temp_connections = self.connections
         with self.graph.as_default():
             operations = {}
+
             # create Variables for input vertices
             for neuron_id in self.input_neurons:
                 self.inputs[neuron_id] = tf.get_variable(name=str(neuron_id), shape=(),
                                                          initializer=tf.zeros_initializer)
+            deletion = []
+            while len(temp_connections) > 0:
+                for neuron_id in deletion:
+                    temp_connections.pop(neuron_id, None)
+                deletion = []
+                keys = list(temp_connections)
+                random.shuffle(keys)
+                # create input & output vertices
+                for neuron_id in temp_connections:
+                    input_neuron_ids = temp_connections[neuron_id]
+                    if self.check(input_neuron_ids, operations):
+                        # weights
+                        v_weights = tf.constant(self.weights[neuron_id])
+                        # input vertices
+                        v_inputs = []
 
-            # create input & output vertices
-            for neuron_id, input_neuron_ids in self.connections.items():
-                # weights
-                v_weights = tf.constant(self.weights[neuron_id])
-                # input vertices
-                v_inputs = []
+                        for input_neuron_id in input_neuron_ids:
+                            if self.is_input_neuron(input_neuron_id):
+                                vertex = self.inputs[input_neuron_id]
+                            else:
+                                vertex = operations[input_neuron_id]
 
-                for input_neuron_id in input_neuron_ids:
-                    if self.is_input_neuron(input_neuron_id):
-                        vertex = self.inputs[input_neuron_id]
-                    else:
-                        try:
-                            vertex = operations[input_neuron_id]
-                        except Exception:
-                            pass
+                            v_inputs.append(vertex)
 
-                    v_inputs.append(vertex)
-                # multiply weights and inputs
-                mul = tf.multiply(v_inputs, v_weights, str(neuron_id))
-                # sum multiplied values
-                sum = tf.reduce_sum(mul, name='sum_' + str(neuron_id))
-                # apply activation function
-                if self.is_output_neuron(neuron_id):
-                    activation = tf.sigmoid(sum, name="output")
-                else:
-                    activation = tf.nn.leaky_relu(sum, alpha=0.2, name="relu_" + str(neuron_id))
+                        deletion.append(neuron_id)
 
-                operations[neuron_id] = activation
-                if self.is_output_neuron(neuron_id):
-                    self.output = activation
+                        # multiply weights and inputs
+                        mul = tf.multiply(v_inputs, v_weights, str(neuron_id))
+                        # sum multiplied values
+                        sum = tf.reduce_sum(mul, name='sum_' + str(neuron_id))
+                        # apply activation function
+                        if self.is_output_neuron(neuron_id):
+                            activation = tf.sigmoid(sum, name="output")
+                        else:
+                            activation = tf.nn.leaky_relu(sum, alpha=0.2, name="relu_" + str(neuron_id))
+
+                        operations[neuron_id] = activation
+                        if self.is_output_neuron(neuron_id):
+                            self.output = activation
         return self.graph, self.inputs, self.output
+
 
     def build(self):
         self.build_model()
         self.build_graph()
         # self.save_graph_summary()
+
+
+    def check(self, input_neuron_ids, operations):
+        """
+       Check if all inputs are initialized.
+       :param input_neuron_ids:
+       :param operations:
+       :return:
+       """
+        for input_neuron_id in input_neuron_ids:
+            if not self.is_input_neuron(input_neuron_id) and input_neuron_id not in operations:
+                return False
+        return True
+
+
+    def first_pass(self):
+        operations = {}
+        with self.graph.as_default():
+            for neuron_id, input_neuron_ids in self.connections.items():
+                operations[neuron_id] = tf.placeholder(dtype='float32', shape=())
+        return operations
+
 
     def is_output_neuron(self, neuron_id):
         """

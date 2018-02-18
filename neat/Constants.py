@@ -6,7 +6,7 @@ old_age_threshold = 50
 old_age_penalty = 0.7
 survival_rate = 0.2
 crossover_rate = 0.7
-max_permitted_neurons = 50
+max_permitted_neurons = 10
 chance_to_add_neuron = 0.08
 num_tries_to_find_old_link = 5
 chance_to_add_link = 0.1
@@ -22,7 +22,7 @@ best_sweepers_num = 4
 compatibility_threshold = 0.26
 max_number_of_species = 10
 epsilon = 0.95
-max_generation = 50
+max_generation = 100
 
 # score multipliers for speciation
 disjoint_multiplier = 1

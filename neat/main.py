@@ -1,10 +1,10 @@
-import profile
-import re
 
-from data_preprocessing.preprocess_data import get_training_data, get_test_data
+from data_preprocessing.preprocess_data import get_test_data, get_training_data
 from model.LoadModel import LoadModel
 from neat.Constants import epsilon, max_generation, population_size
 from neat.Ga import Ga
+import numpy as np
+import tensorflow as tf
 
 
 def evolve_networks(pop_size: int, num_inputs: int, num_outputs: int):
@@ -32,8 +32,20 @@ def main():
     model.save_graph()
     model.save_graph_summary()
     # do evaluation with evaluation set
+
+    loaded_model = LoadModel()
+
     x_test, y_test = get_test_data()
-    model.calculate_loss(x_test, y_test)
+    x_train, y_train = get_training_data()
+
+    y_predict = loaded_model.predict(x_test)
+    y_train_predict = loaded_model.predict(x_train)
+    train_accuracy = np.sum(np.round(np.abs(y_train_predict - y_train))) / len(y_train)
+    accuracy = np.sum(np.round(np.abs(y_predict - y_test))) / len(y_test)
+    print(train_accuracy)
+    print(accuracy)
+
+    # model.calculate_loss(x_test, y_test)
 
 
 if __name__ == '__main__':

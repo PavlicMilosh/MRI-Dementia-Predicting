@@ -295,6 +295,10 @@ class Ga(object):
         if self.genomes[0].fitness > self.best_ever_fitness:
             self.best_ever_fitness = self.genomes[0].fitness
             self.fittest_genome = self.genomes[0]
+            for neuron in self.fittest_genome.neurons:
+                print(neuron.neuron_id)
+            for link in self.fittest_genome.links:
+                print(str(link.from_neuron_id) + "\t" + str(link.to_neuron_id) + "\t" + str(link.enabled))
 
         self.best_genomes.clear()
         for index in range(best_sweepers_num):

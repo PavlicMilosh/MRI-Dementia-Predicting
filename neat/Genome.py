@@ -9,6 +9,7 @@ from neat.LinkGene import LinkGene
 from neat.NeuronGene import NeuronGene
 from neat.NeuronType import NeuronType
 from model import Model
+from neat.graph import Graph
 
 
 class Genome(object):
@@ -184,9 +185,13 @@ class Genome(object):
                 neuron1_id = self.neurons[randint(0, len(self.neurons) - 1)].neuron_id
                 neuron2_id = self.neurons[randint(self.inputs, len(self.neurons) - 1)].neuron_id
 
+                # first neuron must not be output
+                if self.neurons[self.get_element_pos(neuron1_id)].neuron_type == NeuronType.OUTPUT:
+                    continue
+
                 # second neuron must not be input or bias
-                if self.neurons[self.get_element_pos(neuron2_id)].neuron_type != NeuronType.INPUT and \
-                   self.neurons[self.get_element_pos(neuron2_id)].neuron_type != NeuronType.BIAS:
+                if self.neurons[self.get_element_pos(neuron2_id)].neuron_type == NeuronType.INPUT and \
+                   self.neurons[self.get_element_pos(neuron2_id)].neuron_type == NeuronType.BIAS:
                     continue
 
                 if self.duplicate_link(neuron1_id, neuron2_id) or neuron1_id == neuron2_id:
@@ -196,6 +201,11 @@ class Genome(object):
                     break
 
         if neuron1_id < 0 or neuron2_id < 0:
+            return
+
+        graph = Graph.from_genome(self)
+        graph.insert_edge(graph.find_vertex(neuron1_id), graph.find_vertex(neuron2_id))
+        if graph.is_cyclic_graph():
             return
 
         innovation_id = innovation_db.check_link_innovation(neuron1_id, neuron2_id)
@@ -366,17 +376,17 @@ class Genome(object):
     # HELPER METHODS
     # ==================================================================================================================
 
-    def duplicate_link(self, neuron_in_id: int, neuron_out_id: int) -> bool:
+    def duplicate_link(self, neuron_from_id: int, neuron_to_id: int) -> bool:
         """
         Checks if link between given neurons (represented through id)
         already exists.
 
-        :param neuron_in_id:    int
-        :param neuron_out_id:   int
+        :param neuron_to_id:
+        :param neuron_from_id:
         :return:                bool    - returns True if exists, else False
         """
         for l in self.links:
-            if l.from_neuron_id == neuron_in_id and l.to_neuron_id == neuron_out_id:
+            if l.from_neuron_id == neuron_from_id and l.to_neuron_id == neuron_to_id:
                 return True
         return False
 
@@ -422,6 +432,7 @@ class Genome(object):
         if self.model is None:
             raise AttributeError("Error. Phenotype is not created")
         else:
+            self.fitness = self.model.calculate_loss(X, y)
             return self.model.calculate_loss(X, y)
 
 
