@@ -16,13 +16,13 @@ slim = tf.contrib.slim
 
 _FILE_PATTERN = '%s-*'
 
-SPLITS_TO_SIZES = {'train': 297, 'validation': 75}
+SPLITS_TO_SIZES = {'train': 120000, 'validation': 3120}
 
 _NUM_CLASSES = 2
 
 _ITEMS_TO_DESCRIPTIONS = {
     'image': 'A color image of varying size.',
-    'label': 'A single integer between 0 and 2',
+    'label': 'A single integer between 0 and 1',
 }
 
 
