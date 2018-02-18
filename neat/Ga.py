@@ -258,27 +258,13 @@ class Ga(object):
 
         self.genomes = new_population
 
-        legit = 0
-
-        for g in new_population:
-            graph = Graph.from_genome(g)
-            if graph.is_cyclic_graph():
-                print("sranjeee")
-            else:
-                legit += 1
-
-        print("legit: " + str(legit))
-
         new_phenotypes = []
 
         for genotype in self.genomes:
             phenotype = genotype.create_phenotype()
             new_phenotypes.append(phenotype)
-            print("phenotype")
 
         self.generation += 1
-
-        print("posle phenotype")
 
         return new_phenotypes
 
@@ -311,10 +297,10 @@ class Ga(object):
         if self.genomes[0].fitness > self.best_ever_fitness:
             self.best_ever_fitness = self.genomes[0].fitness
             self.fittest_genome = self.genomes[0]
-            for neuron in self.fittest_genome.neurons:
-                print(neuron.neuron_id)
-            for link in self.fittest_genome.links:
-                print(str(link.from_neuron_id) + "\t" + str(link.to_neuron_id) + "\t" + str(link.enabled))
+            # for neuron in self.fittest_genome.neurons:
+            #     print(neuron.neuron_id)
+            # for link in self.fittest_genome.links:
+            #     print(str(link.from_neuron_id) + "\t" + str(link.to_neuron_id) + "\t" + str(link.enabled))
 
         self.best_genomes.clear()
         for index in range(best_sweepers_num):
