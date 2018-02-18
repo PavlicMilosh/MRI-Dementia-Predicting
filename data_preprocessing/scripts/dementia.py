@@ -22,7 +22,7 @@ _NUM_CLASSES = 2
 
 _ITEMS_TO_DESCRIPTIONS = {
     'image': 'A color image of varying size.',
-    'label': 'A single integer between 0 and 2',
+    'label': 'A single integer between 0 and 1',
 }
 
 

@@ -2,11 +2,11 @@
 # Script to preprocess the dementia data set.
 #
 # usage:
-#  ./preprocess_dementia.sh [data-dir]
+#  ./split_images.sh [data-dir]
 set -e
 
 if [ -z "$1" ]; then
-  echo "Usage: download_and_preprocess_flowers.sh [data dir]"
+  echo "Usage: split_images.sh [data dir]"
   exit
 fi
 
@@ -32,7 +32,7 @@ mv images "${TRAIN_DIRECTORY}"
 
 # Generate a list of 2 labels: demented, nondemented
 LABELS_FILE="${SCRATCH_DIR}/labels.txt"
-ls -1 "${TRAIN_DIRECTORY}" | grep -v 'LICENSE' | sed 's/\///' | sort > "${LABELS_FILE}"
+ls -1 "${TRAIN_DIRECTORY}" | sed 's/\///' | sort > "${LABELS_FILE}"
 
 # Generate the validation data set.
 while read LABEL; do
