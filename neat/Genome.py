@@ -129,7 +129,7 @@ class Genome(object):
                                                          output_neuron_id)
 
                 ret.links.append(LinkGene(input_neuron_id, output_neuron_id,
-                                          1.0, True, False, innovation_id))
+                                          uniform(0, 1), True, False, innovation_id))
 
         return ret
 

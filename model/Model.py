@@ -183,8 +183,8 @@ class Model:
         num_examples = X.shape[0]
 
         sub = np.subtract(probs, y)
-        sqr = np.square(sub)
-        sm = np.sum(sqr)
+        abs_sum = np.abs(sub)
+        sm = np.sum(abs_sum)
         loss = 1 - sm / num_examples
         print("Current loss: [" + str(loss) + "]")
         return loss

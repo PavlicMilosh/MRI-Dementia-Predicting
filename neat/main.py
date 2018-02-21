@@ -27,10 +27,10 @@ def evolve_networks(pop_size: int, num_inputs: int, num_outputs: int):
 
 
 def main():
-    best_network = evolve_networks(population_size, 4, 1)
-    model = best_network.create_phenotype()
-    model.save_graph()
-    model.save_graph_summary()
+    # best_network = evolve_networks(population_size, 4, 1)
+    # model = best_network.create_phenotype()
+    # model.save_graph()
+    # model.save_graph_summary()
     # do evaluation with evaluation set
 
     loaded_model = LoadModel()
@@ -40,8 +40,8 @@ def main():
 
     y_predict = loaded_model.predict(x_test)
     y_train_predict = loaded_model.predict(x_train)
-    train_accuracy = np.sum(np.round(np.abs(y_train_predict - y_train))) / len(y_train)
-    accuracy = np.sum(np.round(np.abs(y_predict - y_test))) / len(y_test)
+    train_accuracy = 1 - np.sum(np.abs(y_train_predict - y_train)) / x_train.shape[0]
+    accuracy = 1 - np.sum(np.abs(y_predict - y_test)) / x_test.shape[0]
     print(train_accuracy)
     print(accuracy)
 
