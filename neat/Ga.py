@@ -37,7 +37,7 @@ class Ga(object):
         self.population_size = population_size
 
         self._fittest_genome = fittest_genome
-        self.best_ever_fitness = best_ever_fitness
+        self._best_ever_fitness = best_ever_fitness
 
         self.total_fitness_adj = total_fitness_adj  # adjusted fitness scores
         self.avg_fitness_adj = avg_fitness_adj
@@ -59,12 +59,18 @@ class Ga(object):
         return self._fittest_genome
 
     @fittest_genome.setter
-    def fittest_genome(self, new):
-        print("asdfasdfasdfasdfasdfasfassdf")
-        if self.fittest_genome is not None:
-            print(str(self._fittest_genome.genome_id) + " " + str(self._fittest_genome.fitness))
-        print(str(new.genome_id) + " " + str(new.fitness))
-        self._fittest_genome = new
+    def fittest_genome(self, new: Genome):
+        # print("fittest genome: " + str(new.fitness))
+        self._fittest_genome = Genome.copy(new)
+
+    @property
+    def best_ever_fitness(self):
+        return self._best_ever_fitness
+
+    @best_ever_fitness.setter
+    def best_ever_fitness(self, new):
+        # print("best ever fitness: " + str(new))
+        self._best_ever_fitness = new
 
 
     def crossover(self, mother: Genome, father: Genome) -> Genome:

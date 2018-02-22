@@ -16,13 +16,13 @@ probability_of_weight_replacement = 0.1
 max_weight_perturbation = 0.5
 activation_mutation_rate = 0.1
 max_activation_perturbation = 0.1
-population_size = 20
+population_size = 500
 gens_allowed_with_no_improvement = 15
 best_sweepers_num = 4
 compatibility_threshold = 0.26
 max_number_of_species = 10
 epsilon = 0.95
-max_generation = 10
+max_generation = 200
 
 # score multipliers for speciation
 disjoint_multiplier = 1

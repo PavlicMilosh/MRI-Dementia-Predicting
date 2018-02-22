@@ -21,6 +21,17 @@ class NeuronGene:
 
 
     @classmethod
+    def copy(cls, other: 'NeuronGene') -> 'NeuronGene':
+        ret = cls()
+        ret.neuron_id = other.neuron_id
+        ret.neuron_type = other.neuron_type
+        ret.recurrent = other.recurrent
+        ret.activation_response = other.activation_response
+        ret.innovation_id = other.innovation_id
+        return ret
+
+
+    @classmethod
     def constructor1(cls,
                      neuron_type: NeuronType,
                      neuron_id: int,

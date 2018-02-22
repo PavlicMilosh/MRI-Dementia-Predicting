@@ -83,6 +83,24 @@ class Genome(object):
 
 
     @classmethod
+    def copy(cls, other: 'Genome') -> 'Genome':
+        ret = cls()
+        ret.genome_id = other.genome_id
+        ret.phenotype = other.phenotype
+        ret.links = []
+        for link in other.links:
+            ret.links.append(LinkGene.copy(link))
+        for neuron in other.neurons:
+            ret.neurons.append(NeuronGene.copy(neuron))
+        ret.amount_to_spawn = other.amount_to_spawn
+        ret.fitness = other.fitness
+        ret.adjusted_fitness = other.adjusted_fitness
+        ret.inputs = other.inputs
+        ret.outputs = other.outputs
+        return ret
+
+
+    @classmethod
     def from_inputs_outputs(cls, genome_id: int, inputs: int, outputs: int, innovation_db: InnovationDB):
         """
         Creates object of class Genome from number of inputs and outputs.

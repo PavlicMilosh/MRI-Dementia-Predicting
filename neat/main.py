@@ -18,6 +18,7 @@ def evolve_networks(pop_size: int, num_inputs: int, num_outputs: int):
         print("Epoch: [" + str(ga.generation) + "], Best ever fitness: [" + str(ga.best_ever_fitness) + "]")
         if ga.fittest_genome is not None:
             print("Fittest genome: " + str(ga.fittest_genome.genome_id))
+            print("Fittest genome fitness: " + str(ga.fittest_genome.fitness))
 
         # fitness_scores = []
         # for genotype in ga.genomes:
