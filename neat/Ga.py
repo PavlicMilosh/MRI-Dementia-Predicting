@@ -8,7 +8,6 @@ from neat.InnovationDB import InnovationDB
 from neat.LinkGene import LinkGene
 from neat.ParentType import ParentType
 from neat.Species import Species
-from neat.graph import Graph
 
 
 class Ga(object):
@@ -37,7 +36,7 @@ class Ga(object):
         self.next_species_id = next_species_id
         self.population_size = population_size
 
-        self.fittest_genome = fittest_genome
+        self._fittest_genome = fittest_genome
         self.best_ever_fitness = best_ever_fitness
 
         self.total_fitness_adj = total_fitness_adj  # adjusted fitness scores
@@ -54,6 +53,18 @@ class Ga(object):
         for i in range(self.population_size):
             next_genome_id += 1
             self.genomes.append(Genome.from_inputs_outputs(next_genome_id, inputs, outputs, self.innovation_db))
+
+    @property
+    def fittest_genome(self):
+        return self._fittest_genome
+
+    @fittest_genome.setter
+    def fittest_genome(self, new):
+        print("asdfasdfasdfasdfasdfasfassdf")
+        if self.fittest_genome is not None:
+            print(str(self._fittest_genome.genome_id) + " " + str(self._fittest_genome.fitness))
+        print(str(new.genome_id) + " " + str(new.fitness))
+        self._fittest_genome = new
 
 
     def crossover(self, mother: Genome, father: Genome) -> Genome:
@@ -175,21 +186,14 @@ class Ga(object):
         return networks
 
 
-    def epoch(self, fitness_scores: List[float]):
+    def epoch(self):
         """
         Performs one epoch of genetic algorithm and returns a list of new phenotypes.
 
-        :param fitness_scores:  List[float]           - scores
         :return:                List[Phenotype]       - phenotypes
         """
 
-        if len(fitness_scores) != len(self.genomes):
-            return None
-
         self.reset_and_kill()
-
-        for gen in range(len(self.genomes)):
-            self.genomes[gen].fitness = fitness_scores[gen]
 
         self.sort_and_record()
 
@@ -258,15 +262,11 @@ class Ga(object):
 
         self.genomes = new_population
 
-        new_phenotypes = []
-
         for genotype in self.genomes:
-            phenotype = genotype.create_phenotype()
-            new_phenotypes.append(phenotype)
+            genotype.create_phenotype()
+            genotype.get_fitness()
 
         self.generation += 1
-
-        return new_phenotypes
 
 
     def reset_and_kill(self):
@@ -297,10 +297,6 @@ class Ga(object):
         if self.genomes[0].fitness > self.best_ever_fitness:
             self.best_ever_fitness = self.genomes[0].fitness
             self.fittest_genome = self.genomes[0]
-            # for neuron in self.fittest_genome.neurons:
-            #     print(neuron.neuron_id)
-            # for link in self.fittest_genome.links:
-            #     print(str(link.from_neuron_id) + "\t" + str(link.to_neuron_id) + "\t" + str(link.enabled))
 
         self.best_genomes.clear()
         for index in range(best_sweepers_num):

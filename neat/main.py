@@ -4,33 +4,36 @@ from model.LoadModel import LoadModel
 from neat.Constants import epsilon, max_generation, population_size
 from neat.Ga import Ga
 import numpy as np
-import tensorflow as tf
 
 
 def evolve_networks(pop_size: int, num_inputs: int, num_outputs: int):
     ga = Ga(pop_size, num_inputs, num_outputs)
 
     ga.create_phenotypes()
+    for genome in ga.genomes:
+        genome.get_fitness()
 
     while True:
 
         print("Epoch: [" + str(ga.generation) + "], Best ever fitness: [" + str(ga.best_ever_fitness) + "]")
+        if ga.fittest_genome is not None:
+            print("Fittest genome: " + str(ga.fittest_genome.genome_id))
 
-        fitness_scores = []
-        for genotype in ga.genomes:
-            fitness_scores.append(genotype.get_fitness())
+        # fitness_scores = []
+        # for genotype in ga.genomes:
+        #     fitness_scores.append(genotype.get_fitness())
 
-        ga.epoch(fitness_scores)
+        ga.epoch()
 
-        if ga.best_genomes[0].fitness > epsilon or ga.generation > max_generation:
+        if ga.best_ever_fitness > epsilon or ga.generation > max_generation:
             return ga.fittest_genome
 
 
 def main():
-    # best_network = evolve_networks(population_size, 4, 1)
-    # model = best_network.create_phenotype()
-    # model.save_graph()
-    # model.save_graph_summary()
+    best_network = evolve_networks(population_size, 4, 1)
+    model = best_network.create_phenotype()
+    model.save_graph()
+    model.save_graph_summary()
     # do evaluation with evaluation set
 
     loaded_model = LoadModel()
@@ -40,8 +43,8 @@ def main():
 
     y_predict = loaded_model.predict(x_test)
     y_train_predict = loaded_model.predict(x_train)
-    train_accuracy = 1 - np.sum(np.abs(y_train_predict - y_train)) / x_train.shape[0]
-    accuracy = 1 - np.sum(np.abs(y_predict - y_test)) / x_test.shape[0]
+    train_accuracy = 1 - np.sum(np.abs(np.subtract(y_train_predict, y_train))) / x_train.shape[0]
+    accuracy = 1 - np.sum(np.abs(np.subtract(y_predict, y_test))) / x_test.shape[0]
     print(train_accuracy)
     print(accuracy)
 

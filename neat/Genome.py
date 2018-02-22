@@ -508,3 +508,12 @@ class Genome(object):
 
     def __lt__(self, other):
         return self.fitness < other.fitness
+
+    def __gt__(self, other):
+        return self.fitness > other.fitness
+
+    def __eq__(self, other):
+        return self.fitness == other.fitness
+
+    def __ne__(self, other):
+        return not (self == other)
