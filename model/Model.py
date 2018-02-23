@@ -186,7 +186,7 @@ class Model:
         abs_sum = np.abs(sub)
         sm = np.sum(abs_sum)
         loss = 1 - sm / num_examples
-        print("Current loss: [" + str(loss) + "]")
+        print("Current loss: [ " + str("{:6.5f}").format(loss) + " ]")
         return loss
 
     def feed(self, data):

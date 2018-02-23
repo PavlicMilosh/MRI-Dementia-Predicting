@@ -15,10 +15,13 @@ def evolve_networks(pop_size: int, num_inputs: int, num_outputs: int):
 
     while True:
 
-        print("Epoch: [" + str(ga.generation) + "], Best ever fitness: [" + str(ga.best_ever_fitness) + "]")
+        print("=======================================================================================================")
+        print("Epoch:                  [ " + str(ga.generation) + " ]")
+        print("Best ever fitness:      [ " + str("{:6.5f}").format(ga.best_ever_fitness) + " ]")
         if ga.fittest_genome is not None:
-            print("Fittest genome: " + str(ga.fittest_genome.genome_id))
-            print("Fittest genome fitness: " + str(ga.fittest_genome.fitness))
+            print("Fittest genome:         [ " + str(ga.fittest_genome.genome_id) + " ]")
+            print("Fittest genome fitness: [ " + str("{:6.5f}").format(ga.fittest_genome.fitness) + " ]")
+        print("=======================================================================================================")
 
         # fitness_scores = []
         # for genotype in ga.genomes:
@@ -31,10 +34,10 @@ def evolve_networks(pop_size: int, num_inputs: int, num_outputs: int):
 
 
 def main():
-    best_network = evolve_networks(population_size, 4, 1)
-    model = best_network.create_phenotype()
-    model.save_graph()
-    model.save_graph_summary()
+    # best_network = evolve_networks(population_size, 4, 1)
+    # model = best_network.create_phenotype()
+    # model.save_graph()
+    # model.save_graph_summary()
     # do evaluation with evaluation set
 
     loaded_model = LoadModel()
