@@ -34,10 +34,11 @@ def evolve_networks(pop_size: int, num_inputs: int, num_outputs: int):
 
 
 def main():
-    # best_network = evolve_networks(population_size, 4, 1)
-    # model = best_network.create_phenotype()
-    # model.save_graph()
-    # model.save_graph_summary()
+    best_network = evolve_networks(population_size, 5, 1)
+    model = best_network.create_phenotype()
+    model.save_graph()
+    model.save_graph_summary()
+
     # do evaluation with evaluation set
 
     loaded_model = LoadModel()

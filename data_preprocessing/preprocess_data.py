@@ -18,11 +18,12 @@ def fix_missing_data_mean(data):
 
     # axis = 0, impute along columns
     imputer = Imputer(missing_values='NaN', strategy='mean', axis=0)
-    # columns SES and MMSE have NaN values
-    imputer = imputer.fit(data.values[:, 9:11])
-    transformed = imputer.transform(data.values[:, 9:11])
-    data["SES"] = transformed[:, 0]
-    data["MMSE"] = transformed[:, 0]
+    # columns SES, MMSE and EDUC have NaN values
+    imputer = imputer.fit(data.values[:, 8:11])
+    transformed = imputer.transform(data.values[:, 8:11])
+    data["EDUC"] = transformed[:, 0]
+    data["SES"] = transformed[:, 1]
+    data["MMSE"] = transformed[:, 2]
 
     return data
 
@@ -86,8 +87,7 @@ def feature_importance(X, y):
 
     forest.fit(X, y)
     importances = forest.feature_importances_
-    std = np.std([tree.feature_importances_ for tree in forest.estimators_],
-                 axis=0)
+    std = np.std([tree.feature_importances_ for tree in forest.estimators_], axis=0)
     indices = np.argsort(importances)[::-1]
 
     # Print the feature ranking
@@ -113,7 +113,7 @@ def pca(data):
     :return:
     """
     # Number of components depends on how much variance we want to explain
-    pca = PCA(n_components=4)
+    pca = PCA(n_components=5)
     # applying PCA to data set:
     # 1. fit PCA object to data set so that PCA can see how data object is structured and therefore
     # can extract some new independent variables that explain the most variance
@@ -153,25 +153,23 @@ def get_test_data(path="../data/PCA/"):
     return x_test, y_test[:, 0]
 
 
-def get_data():
-    # importing the dataset
-    data = pd.read_csv('D:\\Machine Learning\\Soft Computing\\MRI-Dementia-Predicting\\data\\oasis_longitudinal.csv')
+def get_data(dataset):
 
-    data = fix_missing_data_mean(data)
-    data = encode_categorical_data(data)
+    dataset = fix_missing_data_mean(dataset)
+    dataset = encode_categorical_data(dataset)
 
     # remove unimportant features
-    for x in ['Subject ID', 'MRI ID', 'Visit', 'Hand']:
-        data.drop(x, axis=1, inplace=True)
+    for x in ['Subject ID', 'MRI ID', 'Visit', 'Hand', 'MR Delay']:
+        dataset.drop(x, axis=1, inplace=True)
 
     # for x in ['M/F', 'MMSE', 'SES', 'MR Delay', 'ASF']:
     #     data.drop(x, axis=1, inplace=True)
 
-    heat_map(data)
+    heat_map(dataset)
 
     # split dataset
-    X = data.iloc[:, 1:]
-    y = data.iloc[:, 0]
+    X = dataset.iloc[:, 1:]
+    y = dataset.iloc[:, 0]
 
     X = scale_data(X.astype('float'))
 
@@ -188,5 +186,50 @@ def get_data():
 
     return x_train, x_test, y_train, y_test
 
+
+def oas1_to_oas2(path):
+    data = pd.read_csv(path)
+
+    ret_data = data.copy(deep=True)
+    ret_data = ret_data.rename(columns={'ID': 'MRI ID', 'Educ': 'EDUC', 'Delay': 'MR Delay'})
+
+    # Subject ID col
+    mri_ids = data['ID']
+    subject_ids = []
+    for mri_id in mri_ids:
+        subject_ids.append(mri_id[0:9])
+    ret_data.insert(0, 'Subject ID', pd.Series(np.array(subject_ids), index=ret_data.index))
+
+    # Set nan in CDR to 0: In dataset description every person younger than 60 has CDR of 0
+    ret_data['CDR'].fillna(0, inplace=True)
+
+    # Create Group column based on CDR: if CDR value >= 0.5, patient is demented
+    cdrs = data['CDR']
+    groups = []
+    for v in cdrs:
+        if v >= 0.5:
+            groups.append("Demented")
+        else:
+            groups.append("Nondemented")
+    ret_data.insert(0, 'Group', pd.Series(np.array(groups), index=ret_data.index))
+
+    # Create visit column
+    ret_data['Visit'] = np.nan
+
+    # Rearrange columns
+    ret_data = ret_data[["Subject ID", "MRI ID", "Group",
+                         "Visit", "MR Delay",
+                         "M/F", "Hand", "Age", "EDUC", "SES",
+                         "MMSE", "CDR", "eTIV", "nWBV", "ASF"]]
+
+    return ret_data
+
+
 if __name__ == '__main__':
-    get_data()
+    oas1 = oas1_to_oas2('D:\\Projects\\SOFT CG\\MRI-Dementia-Predicting\\data\\oasis_cross-sectional.csv')
+    oas2 = pd.read_csv('D:\\Projects\\SOFT CG\\MRI-Dementia-Predicting\\data\\oasis_longitudinal.csv')
+    data = pd.concat([oas1, oas2], ignore_index=True)
+    data.to_csv("D:\\Projects\\SOFT CG\\MRI-Dementia-Predicting\\data\\oas1+oas2.csv", sep=',', index=False)
+    data = get_data(data)
+    print(data)
+
